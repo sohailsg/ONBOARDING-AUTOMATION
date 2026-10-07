@@ -1,0 +1,36 @@
+{
+  "name": "create_ticket",
+  "version": "actions_v1",
+  "description": "Create a ticket in the test Jira project. Returns ticket key.",
+  "host": "n8n-jira",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "queue": {
+        "type": "string"
+      },
+      "title": {
+        "type": "string"
+      },
+      "body": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "queue",
+      "title",
+      "body"
+    ],
+    "additionalProperties": false
+  },
+  "idempotency": {
+    "key_format": "{plan_id}:{action_index}",
+    "header": "Idempotency-Key",
+    "echo_in_response": true
+  },
+  "timeout_seconds": 20,
+  "sandbox": {
+    "mode": "fake-record-echo",
+    "prod_credentials": "absent"
+  }
+}

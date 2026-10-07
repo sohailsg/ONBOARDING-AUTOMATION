@@ -1,0 +1,42 @@
+[
+  {
+    "doc_id": "UK-Employee-Handbook-2026",
+    "region": "UK",
+    "department": "all",
+    "effective_date": "2026-04-01",
+    "version": 1,
+    "txt": "UK-Employee-Handbook-2026.txt",
+    "pdf": "UK-Employee-Handbook-2026.pdf",
+    "pages": 4
+  },
+  {
+    "doc_id": "US-Benefits-Guide-2026",
+    "region": "US",
+    "department": "all",
+    "effective_date": "2026-01-15",
+    "version": 1,
+    "txt": "US-Benefits-Guide-2026.txt",
+    "pdf": "US-Benefits-Guide-2026.pdf",
+    "pages": 4
+  },
+  {
+    "doc_id": "DE-Leave-Policy-2026",
+    "region": "DE",
+    "department": "all",
+    "effective_date": "2026-03-01",
+    "version": 1,
+    "txt": "DE-Leave-Policy-2026.txt",
+    "pdf": "DE-Leave-Policy-2026.pdf",
+    "pages": 4
+  },
+  {
+    "doc_id": "IN-Engineering-Onboarding-2026",
+    "region": "IN",
+    "department": "Engineering",
+    "effective_date": "2026-02-01",
+    "version": 1,
+    "txt": "IN-Engineering-Onboarding-2026.txt",
+    "pdf": "IN-Engineering-Onboarding-2026.pdf",
+    "pages": 3
+  }
+]

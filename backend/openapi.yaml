@@ -1,0 +1,289 @@
+openapi: 3.1.0
+info:
+  title: Onboarding Gateway API
+  version: 0.0.0-w0-stub
+  description: >
+    W0 contract stub. Implements plan §7 surface. Full schemas + examples
+    land in W2 (02-impl). Frontend codegen consumes this file (see Makefile gen-api).
+servers:
+  - url: http://localhost:8000
+paths:
+  /api/v1/onboarding/trigger:
+    post:
+      operationId: triggerOnboarding
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HireRecord'
+      responses:
+        '201':
+          description: Case created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        '200':
+          description: Duplicate idempotency key — existing case
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+  /api/v1/cases:
+    get:
+      operationId: listCases
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/CaseStatus'
+      responses:
+        '200':
+          description: Pipeline page
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Case'
+  /api/v1/cases/{id}/stream:
+    get:
+      operationId: streamTrace
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: text/event-stream of TraceEvent
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/TraceEvent'
+  /api/v1/cases/{id}/plan:
+    get:
+      operationId: getPlan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Current plan version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
+    put:
+      operationId: updatePlan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: New plan version created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
+  /api/v1/approvals/{plan_id}:
+    post:
+      operationId: decideApproval
+      parameters:
+        - name: plan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalDecision'
+      responses:
+        '200':
+          description: Decision recorded (approve enqueues execute)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Approval'
+  /api/v1/me/roadmap:
+    get:
+      operationId: getRoadmap
+      responses:
+        '200':
+          description: Employee 30-day plan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
+  /api/v1/me/checklist/{id}:
+    patch:
+      operationId: tickChecklist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Checklist item updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChecklistItem'
+  /api/v1/chat:
+    post:
+      operationId: policyChat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: Cited answer or abstain
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+  /api/v1/admin/reindex:
+    post:
+      operationId: reindex
+      responses:
+        '202':
+          description: Reindex enqueued
+  /api/v1/execute/{case_id}/halt:
+    post:
+      operationId: haltExecution
+      parameters:
+        - name: case_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Halt requested; remaining pending actions halted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  case_id: { type: string, format: uuid }
+                  status: { type: string }
+                  actions_halted: { type: integer }
+                  halted: { type: boolean }
+components:
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        maxLength: 128
+        example: emp-0001_2026-11-01
+  schemas:
+    CaseStatus:
+      type: string
+      enum: [pending_ingestion, agent_processing, awaiting_hr_approval, executing, needs_attention, active]
+    HireRecord:
+      type: object
+      required: [name, role, dept, region, start_date]
+      properties:
+        name: { type: string, example: Anaya Sharma }
+        role: { type: string, example: Backend Engineer }
+        dept: { type: string, example: Engineering }
+        region: { type: string, example: UK }
+        timezone: { type: string, example: Europe/London }
+        manager_id: { type: string }
+        buddy_id: { type: string }
+        start_date: { type: string, format: date, example: '2026-11-01' }
+    Case:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        employee_id: { type: string, format: uuid }
+        status: { $ref: '#/components/schemas/CaseStatus' }
+        current_plan_version: { type: integer }
+        idempotency_key: { type: string }
+    Plan:
+      type: object
+      description: Full versioned plan (EntitlementSet + OnboardingPlan + SystemActionPlan). Detailed schemas in W2/W4.
+      properties:
+        id: { type: string, format: uuid }
+        case_id: { type: string, format: uuid }
+        version: { type: integer }
+        json_payload: { type: object }
+        created_by: { type: string, enum: [agent, hr_user] }
+    ApprovalDecision:
+      type: object
+      required: [decision]
+      properties:
+        decision: { type: string, enum: [approve, reject] }
+        comment: { type: string }
+    Approval:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        plan_id: { type: string, format: uuid }
+        approver_id: { type: string }
+        decision: { type: string }
+        decided_at: { type: string, format: date-time }
+    ChecklistItem:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        due_day: { type: integer }
+        mandatory: { type: boolean }
+        completed_at: { type: string, format: date-time, nullable: true }
+    ChatRequest:
+      type: object
+      required: [question]
+      properties:
+        question: { type: string, example: 'What is my remote home-office budget in the UK?' }
+    ChatResponse:
+      type: object
+      properties:
+        answer: { type: string }
+        citations:
+          type: array
+          items:
+            type: object
+            properties:
+              doc: { type: string }
+              page: { type: integer }
+              effective_date: { type: string, format: date }
+        confidence: { type: number }
+    TraceEvent:
+      type: object
+      properties:
+        ts: { type: string, format: date-time }
+        step: { type: string }
+        message: { type: string, example: 'Searching Chroma for UK leave policy...' }
+        case_id: { type: string, format: uuid }
+        session_id: { type: string }

@@ -1,0 +1,15 @@
+{
+  "templates": {
+    "day1_welcome": {
+      "subject": "Welcome to the team, {{name}}!",
+      "body": "Hi {{name}}, Day 1 starts {{start}} with your buddy {{buddy}}. Reply to this email if anything is missing.",
+      "to": "{{work_email}}"
+    },
+    "it_provisioning": {
+      "subject": "Laptop provisioning: {{name}}",
+      "body": "MacBook 14 + monitor for {{name}}, start {{start_date}}",
+      "to": "{{hr_dlq_mailbox}}"
+    }
+  },
+  "note": "HR-approved templates only; payload preview in HITL editor before approve."
+}

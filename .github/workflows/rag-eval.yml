@@ -1,0 +1,47 @@
+name: rag-eval
+
+on:
+  pull_request:
+    paths:
+      - 'rag-service/**'
+      - '.github/workflows/rag-eval.yml'
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 3 * * *'  # nightly full eval (live Ollama)
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install (free-only deps)
+        run: pip install fastapi uvicorn pydantic chromadb httpx pypdf pytest httpx fakeredis reportlab
+      - name: Unit + mocked-retrieval tests
+        run: python -m pytest rag-service/tests -q
+        env:
+          EMBEDDING_BACKEND: hash
+
+  eval-gate:
+    # Full golden-set gate: required on main + nightly, manual on PRs.
+    if: github.event_name == 'push' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install (free-only deps)
+        run: pip install fastapi uvicorn pydantic chromadb httpx pypdf pytest httpx fakeredis reportlab
+      - name: Seed ephemeral index
+        run: |
+          python rag-service/seeds/seed_policies.py
+          CHROMA_DIR=$RUNNER_TEMP/chroma EMBEDDING_BACKEND=hash \
+            python rag-service/scripts/seed_index.py
+      - name: RAGAS-style eval gate (Faithfulness >= 0.9)
+        run: |
+          CHROMA_DIR=$RUNNER_TEMP/chroma EMBEDDING_BACKEND=hash \
+            python rag-service/eval/evaluate.py --llm extractive

@@ -1,0 +1,13 @@
+{
+  "title": "Onboarding Pilot (07 hardening)",
+  "uid": "onboarding-pilot",
+  "timezone": "utc",
+  "panels": [
+    {"title": "Request p95 latency (ms)", "targets": [{"expr": "histogram_quantile(0.95, onboarding_request_latency_ms)"}]},
+    {"title": "Queue depth / DLQ", "targets": [{"expr": "onboarding_dlq_depth"}]},
+    {"title": "Action success rate", "targets": [{"expr": "onboarding_actions_total"}]},
+    {"title": "Chat Faithfulness trend (avg confidence)", "targets": [{"expr": "onboarding_chat_avg_confidence"}]},
+    {"title": "LLM cost per hire (USD)", "targets": [{"expr": "langfuse_cost_per_case_usd"}]},
+    {"title": "5xx spike", "targets": [{"expr": "sum(rate(onboarding_requests_total{status=~\"5..\"}[5m]))"}]}
+  ]
+}

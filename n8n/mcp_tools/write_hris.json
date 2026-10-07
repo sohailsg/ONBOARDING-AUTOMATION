@@ -1,0 +1,32 @@
+{
+  "name": "write_hris",
+  "version": "actions_v1",
+  "description": "Upsert employee fields in sandbox BambooHR. Returns record ref.",
+  "host": "n8n-hris",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "employee_id": {
+        "type": "string"
+      },
+      "fields": {
+        "type": "object"
+      }
+    },
+    "required": [
+      "employee_id",
+      "fields"
+    ],
+    "additionalProperties": false
+  },
+  "idempotency": {
+    "key_format": "{plan_id}:{action_index}",
+    "header": "Idempotency-Key",
+    "echo_in_response": true
+  },
+  "timeout_seconds": 20,
+  "sandbox": {
+    "mode": "fake-record-echo",
+    "prod_credentials": "absent"
+  }
+}

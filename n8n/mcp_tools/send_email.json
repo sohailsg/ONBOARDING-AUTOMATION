@@ -1,0 +1,37 @@
+{
+  "name": "send_email",
+  "version": "actions_v1",
+  "description": "Send a hire-facing email via the test mailbox in sandbox. Returns message-id.",
+  "host": "n8n-email",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "to": {
+        "type": "string",
+        "format": "email"
+      },
+      "subject": {
+        "type": "string"
+      },
+      "body": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "to",
+      "subject",
+      "body"
+    ],
+    "additionalProperties": false
+  },
+  "idempotency": {
+    "key_format": "{plan_id}:{action_index}",
+    "header": "Idempotency-Key",
+    "echo_in_response": true
+  },
+  "timeout_seconds": 20,
+  "sandbox": {
+    "mode": "fake-record-echo",
+    "prod_credentials": "absent"
+  }
+}

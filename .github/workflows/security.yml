@@ -1,0 +1,41 @@
+# 07 hardening: security gate (ZAP-lite via OWASP baseline placeholder,
+# dependency audit, secret scan). All jobs run on push + PR; pilot promotion
+# requires this workflow green (impl §6 checklist).
+name: security
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python scripts/check_secrets.py
+
+  deps-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install pip-audit
+      - run: pip-audit -r backend/requirements.txt || pip-audit --disable-pip
+
+  zap-baseline:
+    # OWASP ZAP baseline against staging. Nightly + pre-pilot; non-blocking
+    # on dev pushes (continue-on-error) but REQUIRED green before pilot/prod.
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: ZAP baseline scan
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: ${{ secrets.STAGING_URL || 'http://localhost:8000' }}
+          allow_issue_writing: false

@@ -1,0 +1,6 @@
+--- page 1 ---
+IN Engineering Onboarding 2026. Every new engineer gets a buddy and a 30-day plan with weekly check-ins. Complete security training in week 1.
+--- page 2 ---
+Engineering equipment in India is a MacBook plus a monitor budget of INR 40000. Raise an IT ticket on day 1. Replacements follow a 3-year refresh cycle.
+--- page 3 ---
+Engineering leave in India is 24 days earned leave per year. Sick and casual leave add 12 days. On-call engineers get compensatory leave after weekend incidents.

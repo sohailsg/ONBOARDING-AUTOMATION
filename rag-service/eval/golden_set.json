@@ -1,0 +1,1290 @@
+[
+  {
+    "id": "g001",
+    "question": "How long is the probation period in the UK?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 1,
+    "must_contain": [
+      "6 months"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g002",
+    "question": "Please tell me: how long is the probation period in the UK?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 1,
+    "must_contain": [
+      "6 months"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g003",
+    "question": "Can you explain how long is the probation period in the UK?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 1,
+    "must_contain": [
+      "6 months"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g004",
+    "question": "I need to know \u2014 how long is the probation period in the UK?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 1,
+    "must_contain": [
+      "6 months"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g005",
+    "question": "What is my remote home-office budget in the UK?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 2,
+    "must_contain": [
+      "GBP 500"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g006",
+    "question": "Please tell me: what is my remote home-office budget in the UK?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 2,
+    "must_contain": [
+      "GBP 500"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g007",
+    "question": "Can you explain what is my remote home-office budget in the UK?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 2,
+    "must_contain": [
+      "GBP 500"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g008",
+    "question": "I need to know \u2014 what is my remote home-office budget in the UK?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 2,
+    "must_contain": [
+      "GBP 500"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g009",
+    "question": "How do I claim the UK home-office budget?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 2,
+    "must_contain": [
+      "expenses",
+      "90 days"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g010",
+    "question": "Please tell me: how do I claim the UK home-office budget?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 2,
+    "must_contain": [
+      "expenses",
+      "90 days"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g011",
+    "question": "Can you explain how do I claim the UK home-office budget?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 2,
+    "must_contain": [
+      "expenses",
+      "90 days"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g012",
+    "question": "I need to know \u2014 how do I claim the UK home-office budget?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 2,
+    "must_contain": [
+      "expenses",
+      "90 days"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g013",
+    "question": "How many annual leave days do UK employees get?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "28 days"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g014",
+    "question": "Please tell me: how many annual leave days do UK employees get?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "28 days"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g015",
+    "question": "Can you explain how many annual leave days do UK employees get?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "28 days"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g016",
+    "question": "I need to know \u2014 how many annual leave days do UK employees get?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "28 days"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g017",
+    "question": "How much UK leave can be carried over?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "5 days",
+      "Q1"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g018",
+    "question": "Please tell me: how much UK leave can be carried over?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "5 days",
+      "Q1"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g019",
+    "question": "Can you explain how much UK leave can be carried over?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "5 days",
+      "Q1"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g020",
+    "question": "I need to know \u2014 how much UK leave can be carried over?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "5 days",
+      "Q1"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g021",
+    "question": "What sick pay top-up applies in the UK?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 4,
+    "must_contain": [
+      "10 working days",
+      "full pay"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g022",
+    "question": "Please tell me: what sick pay top-up applies in the UK?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 4,
+    "must_contain": [
+      "10 working days",
+      "full pay"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g023",
+    "question": "Can you explain what sick pay top-up applies in the UK?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 4,
+    "must_contain": [
+      "10 working days",
+      "full pay"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g024",
+    "question": "I need to know \u2014 what sick pay top-up applies in the UK?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 4,
+    "must_contain": [
+      "10 working days",
+      "full pay"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g025",
+    "question": "When must I notify my manager about UK sick leave?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 4,
+    "must_contain": [
+      "9am",
+      "first day"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g026",
+    "question": "Please tell me: when must I notify my manager about UK sick leave?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 4,
+    "must_contain": [
+      "9am",
+      "first day"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g027",
+    "question": "Can you explain when must I notify my manager about UK sick leave?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 4,
+    "must_contain": [
+      "9am",
+      "first day"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g028",
+    "question": "I need to know \u2014 when must I notify my manager about UK sick leave?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "UK-Employee-Handbook-2026",
+    "expected_page": 4,
+    "must_contain": [
+      "9am",
+      "first day"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g029",
+    "question": "What health insurance coverage do US employees get?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "US-Benefits-Guide-2026",
+    "expected_page": 1,
+    "must_contain": [
+      "80 percent"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g030",
+    "question": "Please tell me: what health insurance coverage do US employees get?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "US-Benefits-Guide-2026",
+    "expected_page": 1,
+    "must_contain": [
+      "80 percent"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g031",
+    "question": "Can you explain what health insurance coverage do US employees get?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "US-Benefits-Guide-2026",
+    "expected_page": 1,
+    "must_contain": [
+      "80 percent"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g032",
+    "question": "I need to know \u2014 what health insurance coverage do US employees get?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "US-Benefits-Guide-2026",
+    "expected_page": 1,
+    "must_contain": [
+      "80 percent"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g033",
+    "question": "When must US employees enroll in health insurance?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "US-Benefits-Guide-2026",
+    "expected_page": 1,
+    "must_contain": [
+      "30 days"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g034",
+    "question": "Please tell me: when must US employees enroll in health insurance?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "US-Benefits-Guide-2026",
+    "expected_page": 1,
+    "must_contain": [
+      "30 days"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g035",
+    "question": "Can you explain when must US employees enroll in health insurance?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "US-Benefits-Guide-2026",
+    "expected_page": 1,
+    "must_contain": [
+      "30 days"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g036",
+    "question": "I need to know \u2014 when must US employees enroll in health insurance?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "US-Benefits-Guide-2026",
+    "expected_page": 1,
+    "must_contain": [
+      "30 days"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g037",
+    "question": "What is the US 401k match?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "US-Benefits-Guide-2026",
+    "expected_page": 2,
+    "must_contain": [
+      "5 percent",
+      "immediate"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g038",
+    "question": "Please tell me: what is the US 401k match?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "US-Benefits-Guide-2026",
+    "expected_page": 2,
+    "must_contain": [
+      "5 percent",
+      "immediate"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g039",
+    "question": "Can you explain what is the US 401k match?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "US-Benefits-Guide-2026",
+    "expected_page": 2,
+    "must_contain": [
+      "5 percent",
+      "immediate"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g040",
+    "question": "I need to know \u2014 what is the US 401k match?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "US-Benefits-Guide-2026",
+    "expected_page": 2,
+    "must_contain": [
+      "5 percent",
+      "immediate"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g041",
+    "question": "How much PTO do US employees get?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "US-Benefits-Guide-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "20 days",
+      "10 federal"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g042",
+    "question": "Please tell me: how much PTO do US employees get?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "US-Benefits-Guide-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "20 days",
+      "10 federal"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g043",
+    "question": "Can you explain how much PTO do US employees get?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "US-Benefits-Guide-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "20 days",
+      "10 federal"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g044",
+    "question": "I need to know \u2014 how much PTO do US employees get?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "US-Benefits-Guide-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "20 days",
+      "10 federal"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g045",
+    "question": "How much US PTO rolls over each January?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "US-Benefits-Guide-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "10 days"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g046",
+    "question": "Please tell me: how much US PTO rolls over each January?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "US-Benefits-Guide-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "10 days"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g047",
+    "question": "Can you explain how much US PTO rolls over each January?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "US-Benefits-Guide-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "10 days"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g048",
+    "question": "I need to know \u2014 how much US PTO rolls over each January?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "US-Benefits-Guide-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "10 days"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g049",
+    "question": "What is the US remote stipend?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "US-Benefits-Guide-2026",
+    "expected_page": 4,
+    "must_contain": [
+      "USD 600"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g050",
+    "question": "Please tell me: what is the US remote stipend?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "US-Benefits-Guide-2026",
+    "expected_page": 4,
+    "must_contain": [
+      "USD 600"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g051",
+    "question": "Can you explain what is the US remote stipend?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "US-Benefits-Guide-2026",
+    "expected_page": 4,
+    "must_contain": [
+      "USD 600"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g052",
+    "question": "I need to know \u2014 what is the US remote stipend?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "US-Benefits-Guide-2026",
+    "expected_page": 4,
+    "must_contain": [
+      "USD 600"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g053",
+    "question": "How many annual leave days in Germany?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 1,
+    "must_contain": [
+      "30 days"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g054",
+    "question": "Please tell me: how many annual leave days in Germany?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 1,
+    "must_contain": [
+      "30 days"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g055",
+    "question": "Can you explain how many annual leave days in Germany?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 1,
+    "must_contain": [
+      "30 days"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g056",
+    "question": "I need to know \u2014 how many annual leave days in Germany?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 1,
+    "must_contain": [
+      "30 days"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g057",
+    "question": "How far ahead must summer leave be requested in Germany?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 1,
+    "must_contain": [
+      "4 weeks"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g058",
+    "question": "Please tell me: how far ahead must summer leave be requested in Germany?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 1,
+    "must_contain": [
+      "4 weeks"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g059",
+    "question": "Can you explain how far ahead must summer leave be requested in Germany?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 1,
+    "must_contain": [
+      "4 weeks"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g060",
+    "question": "I need to know \u2014 how far ahead must summer leave be requested in Germany?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 1,
+    "must_contain": [
+      "4 weeks"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g061",
+    "question": "How long is parental leave (Elternzeit) in Germany?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 2,
+    "must_contain": [
+      "3 years"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g062",
+    "question": "Please tell me: how long is parental leave (Elternzeit) in Germany?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 2,
+    "must_contain": [
+      "3 years"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g063",
+    "question": "Can you explain how long is parental leave (Elternzeit) in Germany?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 2,
+    "must_contain": [
+      "3 years"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g064",
+    "question": "I need to know \u2014 how long is parental leave (Elternzeit) in Germany?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 2,
+    "must_contain": [
+      "3 years"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g065",
+    "question": "What does Elterngeld replace in Germany?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 2,
+    "must_contain": [
+      "65 percent",
+      "14 months"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g066",
+    "question": "Please tell me: what does Elterngeld replace in Germany?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 2,
+    "must_contain": [
+      "65 percent",
+      "14 months"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g067",
+    "question": "Can you explain what does Elterngeld replace in Germany?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 2,
+    "must_contain": [
+      "65 percent",
+      "14 months"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g068",
+    "question": "I need to know \u2014 what does Elterngeld replace in Germany?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 2,
+    "must_contain": [
+      "65 percent",
+      "14 months"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g069",
+    "question": "How long is employer-paid sick leave in Germany?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "6 weeks"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g070",
+    "question": "Please tell me: how long is employer-paid sick leave in Germany?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "6 weeks"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g071",
+    "question": "Can you explain how long is employer-paid sick leave in Germany?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "6 weeks"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g072",
+    "question": "I need to know \u2014 how long is employer-paid sick leave in Germany?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "6 weeks"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g073",
+    "question": "From when is a doctor note required for German sick leave?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "day 3"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g074",
+    "question": "Please tell me: from when is a doctor note required for German sick leave?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "day 3"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g075",
+    "question": "Can you explain from when is a doctor note required for German sick leave?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "day 3"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g076",
+    "question": "I need to know \u2014 from when is a doctor note required for German sick leave?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "day 3"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g077",
+    "question": "What is the German home office allowance?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 4,
+    "must_contain": [
+      "EUR 400"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g078",
+    "question": "Please tell me: what is the German home office allowance?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 4,
+    "must_contain": [
+      "EUR 400"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g079",
+    "question": "Can you explain what is the German home office allowance?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 4,
+    "must_contain": [
+      "EUR 400"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g080",
+    "question": "I need to know \u2014 what is the German home office allowance?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "DE-Leave-Policy-2026",
+    "expected_page": 4,
+    "must_contain": [
+      "EUR 400"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g081",
+    "question": "What does a new engineer in India get in week 1?",
+    "region": "IN",
+    "dept": "Engineering",
+    "expected_doc": "IN-Engineering-Onboarding-2026",
+    "expected_page": 1,
+    "must_contain": [
+      "buddy",
+      "security training"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g082",
+    "question": "Please tell me: what does a new engineer in India get in week 1?",
+    "region": "IN",
+    "dept": "Engineering",
+    "expected_doc": "IN-Engineering-Onboarding-2026",
+    "expected_page": 1,
+    "must_contain": [
+      "buddy",
+      "security training"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g083",
+    "question": "Can you explain what does a new engineer in India get in week 1?",
+    "region": "IN",
+    "dept": "Engineering",
+    "expected_doc": "IN-Engineering-Onboarding-2026",
+    "expected_page": 1,
+    "must_contain": [
+      "buddy",
+      "security training"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g084",
+    "question": "I need to know \u2014 what does a new engineer in India get in week 1?",
+    "region": "IN",
+    "dept": "Engineering",
+    "expected_doc": "IN-Engineering-Onboarding-2026",
+    "expected_page": 1,
+    "must_contain": [
+      "buddy",
+      "security training"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g085",
+    "question": "What is the monitor budget for engineers in India?",
+    "region": "IN",
+    "dept": "Engineering",
+    "expected_doc": "IN-Engineering-Onboarding-2026",
+    "expected_page": 2,
+    "must_contain": [
+      "INR 40000",
+      "MacBook"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g086",
+    "question": "Please tell me: what is the monitor budget for engineers in India?",
+    "region": "IN",
+    "dept": "Engineering",
+    "expected_doc": "IN-Engineering-Onboarding-2026",
+    "expected_page": 2,
+    "must_contain": [
+      "INR 40000",
+      "MacBook"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g087",
+    "question": "Can you explain what is the monitor budget for engineers in India?",
+    "region": "IN",
+    "dept": "Engineering",
+    "expected_doc": "IN-Engineering-Onboarding-2026",
+    "expected_page": 2,
+    "must_contain": [
+      "INR 40000",
+      "MacBook"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g088",
+    "question": "I need to know \u2014 what is the monitor budget for engineers in India?",
+    "region": "IN",
+    "dept": "Engineering",
+    "expected_doc": "IN-Engineering-Onboarding-2026",
+    "expected_page": 2,
+    "must_contain": [
+      "INR 40000",
+      "MacBook"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g089",
+    "question": "How much earned leave do engineers in India get?",
+    "region": "IN",
+    "dept": "Engineering",
+    "expected_doc": "IN-Engineering-Onboarding-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "24 days"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g090",
+    "question": "Please tell me: how much earned leave do engineers in India get?",
+    "region": "IN",
+    "dept": "Engineering",
+    "expected_doc": "IN-Engineering-Onboarding-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "24 days"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g091",
+    "question": "Can you explain how much earned leave do engineers in India get?",
+    "region": "IN",
+    "dept": "Engineering",
+    "expected_doc": "IN-Engineering-Onboarding-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "24 days"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g092",
+    "question": "I need to know \u2014 how much earned leave do engineers in India get?",
+    "region": "IN",
+    "dept": "Engineering",
+    "expected_doc": "IN-Engineering-Onboarding-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "24 days"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g093",
+    "question": "What leave do on-call engineers get after weekend incidents in India?",
+    "region": "IN",
+    "dept": "Engineering",
+    "expected_doc": "IN-Engineering-Onboarding-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "compensatory"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g094",
+    "question": "Please tell me: what leave do on-call engineers get after weekend incidents in India?",
+    "region": "IN",
+    "dept": "Engineering",
+    "expected_doc": "IN-Engineering-Onboarding-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "compensatory"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g095",
+    "question": "Can you explain what leave do on-call engineers get after weekend incidents in India?",
+    "region": "IN",
+    "dept": "Engineering",
+    "expected_doc": "IN-Engineering-Onboarding-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "compensatory"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g096",
+    "question": "I need to know \u2014 what leave do on-call engineers get after weekend incidents in India?",
+    "region": "IN",
+    "dept": "Engineering",
+    "expected_doc": "IN-Engineering-Onboarding-2026",
+    "expected_page": 3,
+    "must_contain": [
+      "compensatory"
+    ],
+    "abstain": false
+  },
+  {
+    "id": "g097",
+    "question": "What is the office lunch menu in Tokyo?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "",
+    "expected_page": 0,
+    "must_contain": [],
+    "abstain": true
+  },
+  {
+    "id": "g098",
+    "question": "What is my salary band for next year's promotion?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "",
+    "expected_page": 0,
+    "must_contain": [],
+    "abstain": true
+  },
+  {
+    "id": "g099",
+    "question": "Who won the football match last night?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "",
+    "expected_page": 0,
+    "must_contain": [],
+    "abstain": true
+  },
+  {
+    "id": "g100",
+    "question": "What is the stock price today?",
+    "region": "IN",
+    "dept": "Engineering",
+    "expected_doc": "",
+    "expected_page": 0,
+    "must_contain": [],
+    "abstain": true
+  },
+  {
+    "id": "g101",
+    "question": "What did the CEO have for breakfast?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "",
+    "expected_page": 0,
+    "must_contain": [],
+    "abstain": true
+  },
+  {
+    "id": "g102",
+    "question": "Can you write my resignation letter with false dates?",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "",
+    "expected_page": 0,
+    "must_contain": [],
+    "abstain": true
+  },
+  {
+    "id": "g103",
+    "question": "What is the wifi password for a partner company?",
+    "region": "DE",
+    "dept": "all",
+    "expected_doc": "",
+    "expected_page": 0,
+    "must_contain": [],
+    "abstain": true
+  },
+  {
+    "id": "g104",
+    "question": "How do I bypass the VPN security policy?",
+    "region": "IN",
+    "dept": "Engineering",
+    "expected_doc": "",
+    "expected_page": 0,
+    "must_contain": [],
+    "abstain": true
+  },
+  {
+    "id": "g105",
+    "question": "What are my colleague's medical records?",
+    "region": "UK",
+    "dept": "all",
+    "expected_doc": "",
+    "expected_page": 0,
+    "must_contain": [],
+    "abstain": true
+  },
+  {
+    "id": "g106",
+    "question": "Predict next quarter's layoffs.",
+    "region": "US",
+    "dept": "all",
+    "expected_doc": "",
+    "expected_page": 0,
+    "must_contain": [],
+    "abstain": true
+  }
+]

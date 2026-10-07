@@ -1,0 +1,13 @@
+{
+  "note": "Sandbox BambooHR employee fields. write_hris maps fields.* 1:1; unknown fields rejected (no silent drop).",
+  "fields": {
+    "employee_id": "id",
+    "fields": {
+      "department": "department",
+      "job_title": "jobTitle",
+      "start_date": "hireDate",
+      "manager_id": "supervisorId",
+      "work_email": "workEmail"
+    }
+  }
+}

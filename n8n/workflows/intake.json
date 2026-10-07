@@ -1,0 +1,220 @@
+{
+  "meta": {
+    "spec": "05-n8n-mcp-executor-spec.md F-MCP-1",
+    "version": "actions_v1"
+  },
+  "name": "intake-workflow-a",
+  "nodes": [
+    {
+      "name": "HRIS Webhook",
+      "notes": "HRIS -> n8n webhook. HMAC-SHA256 over raw body, header X-HRIS-Signature. Secret: WEBHOOK_HMAC_SECRET (server-side only).",
+      "parameters": {
+        "httpMethod": "POST",
+        "options": {},
+        "path": "hris-hire",
+        "responseMode": "responseNode"
+      },
+      "position": [
+        240,
+        300
+      ],
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2
+    },
+    {
+      "name": "Verify HMAC",
+      "notes": "Reject 401 on mismatch. expected = hex(hmac_sha256(WEBHOOK_HMAC_SECRET, rawBody)).",
+      "parameters": {
+        "jsCode": "const crypto = require('crypto');\nconst secret = $env.WEBHOOK_HMAC_SECRET || '';\nconst raw = JSON.stringify($input.first().json);\nconst sig = ($input.first().json._sig || $headers['x-hris-signature'] || '').replace(/^sha256=/, '');\nconst expected = crypto.createHmac('sha256', secret).update(raw).digest('hex');\nif (!sig || sig.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) {\n  throw new Error('401 invalid HMAC signature');\n}\nreturn $input.all();"
+      },
+      "position": [
+        460,
+        300
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
+    },
+    {
+      "name": "Validate Hire",
+      "notes": "Required: name, start_date (YYYY-MM-DD). Optional passthrough: role, dept, region, timezone, manager_id, buddy_id.",
+      "parameters": {
+        "jsCode": "const h = $input.first().json;\nfor (const f of ['name', 'start_date']) {\n  if (!h[f] || String(h[f]).trim() === '') throw new Error(`hire validation: missing ${f}`);\n}\nif (!/^\\d{4}-\\d{2}-\\d{2}$/.test(h.start_date)) throw new Error('hire validation: bad start_date');\nreturn [{ json: h }];"
+      },
+      "position": [
+        680,
+        300
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
+    },
+    {
+      "name": "Build Idempotency Key",
+      "notes": "Key = {hire_id}:{start_date}. Duplicate HRIS event -> single case (API returns 200 existing).",
+      "parameters": {
+        "jsCode": "const h = $input.first().json;\nconst hireId = h.hire_id || h.email || h.name;\nreturn [{ json: { hire: h, idemKey: `${hireId}:${h.start_date}` } }];"
+      },
+      "position": [
+        900,
+        300
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
+    },
+    {
+      "name": "POST Trigger",
+      "notes": "POST {API_BASE_URL}/api/v1/onboarding/trigger with Idempotency-Key + X-Service-Key. Retry 3x backoff (2s/10s/60s); on final failure route to DLQ node.",
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "retry": {
+            "retry": {
+              "enabled": true,
+              "maxTries": 4
+            }
+          }
+        },
+        "sendHeaders": true,
+        "url": "={{ $env.API_BASE_URL }}/api/v1/onboarding/trigger"
+      },
+      "position": [
+        1120,
+        300
+      ],
+      "retryOnFail": true,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "name": "Backoff 2s-10s-60s",
+      "notes": "Wait node chain models runner backoff schedule between retries of POST Trigger.",
+      "parameters": {
+        "amount": 10,
+        "unit": "seconds"
+      },
+      "position": [
+        1120,
+        480
+      ],
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1
+    },
+    {
+      "name": "DLQ to HR Inbox",
+      "notes": "After retries exhausted: email raw payload + error to HR DLQ mailbox for manual replay.",
+      "parameters": {
+        "options": {},
+        "sendTo": "={{ $env.HR_DLQ_MAILBOX }}",
+        "subject": "DLQ: hire intake failed for {{ $json.hire.name }}",
+        "text": "={{ JSON.stringify($json) }}",
+        "type": "text"
+      },
+      "position": [
+        1340,
+        480
+      ],
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2
+    },
+    {
+      "name": "Respond Created",
+      "parameters": {
+        "options": {},
+        "respondWith": "json"
+      },
+      "position": [
+        1340,
+        300
+      ],
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1
+    }
+  ],
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "intake"
+    },
+    {
+      "name": "sandbox"
+    }
+  ],
+  "connections": {
+    "HRIS Webhook": {
+      "main": [
+        [
+          {
+            "node": "Verify HMAC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify HMAC": {
+      "main": [
+        [
+          {
+            "node": "Validate Hire",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Hire": {
+      "main": [
+        [
+          {
+            "node": "Build Idempotency Key",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Idempotency Key": {
+      "main": [
+        [
+          {
+            "node": "POST Trigger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST Trigger": {
+      "main": [
+        [
+          {
+            "node": "Respond Created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Backoff 2s-10s-60s": {
+      "main": [
+        [
+          {
+            "node": "DLQ to HR Inbox",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

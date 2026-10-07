@@ -1,0 +1,12 @@
+# Onboarding-local ignores (repo root .gitignore still applies)
+.env
+.env.*
+!.env.example
+data/chroma/
+data/
+*.db
+__pycache__/
+.pytest_cache/
+node_modules/
+.next/
+dist/

@@ -1,0 +1,8 @@
+{
+  "channels": {
+    "hr_ops": "#hr-ops-sandbox",
+    "it_help": "#it-help-sandbox",
+    "welcome": "#welcome-sandbox"
+  },
+  "note": "Sandbox channels only; pilot maps to real channels with HR sign-off."
+}

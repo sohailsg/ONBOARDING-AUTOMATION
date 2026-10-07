@@ -1,0 +1,90 @@
+# W1 (01-infra-data-impl, task 1.1). One-command local stack.
+# Free-stack binding (docs/STACK_DECISION_FREE.md): Qdrant is replaced by
+# Chroma persistent-local (embedded, CHROMA_DIR — no server container needed).
+# Vectors therefore need no compose service; Postgres/Redis/n8n run here.
+name: onboarding
+
+networks:
+  onboarding:
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:
+  n8ndata:
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    networks: [onboarding]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-onboarding}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-app} -d $${POSTGRES_DB:-onboarding}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    networks: [onboarding]
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  n8n:
+    # Self-hosted image pinned (impl §7: pin digest before pilot).
+    image: n8nio/n8n:1.64.0
+    restart: unless-stopped
+    networks: [onboarding]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      N8N_HOST: ${N8N_HOST:-localhost}
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: db
+      DB_POSTGRESDB_PORT: 5432
+      # Dedicated database (NOT the app DB): keeps n8n tables out of
+      # `alembic check` scope. Created by db/init/01-n8n-db.sql.
+      DB_POSTGRESDB_DATABASE: ${N8N_DB:-n8n}
+      DB_POSTGRESDB_USER: ${POSTGRES_USER:-app}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD:-app}
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    volumes:
+      - n8ndata:/home/node/.n8n
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      # NOTE: 127.0.0.1 (not localhost) — n8n listens on IPv4; wget in this
+      # image does not fall back from ::1.
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:5678/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s

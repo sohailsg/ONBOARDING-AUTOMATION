@@ -1,0 +1,33 @@
+{
+  "name": "create_notion_page",
+  "version": "actions_v1",
+  "description": "Create an onboarding page from a template in the sandbox Notion workspace. Returns page id.",
+  "host": "notion-official",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "template": {
+        "type": "string"
+      },
+      "owner": {
+        "type": "string",
+        "format": "email"
+      }
+    },
+    "required": [
+      "template",
+      "owner"
+    ],
+    "additionalProperties": false
+  },
+  "idempotency": {
+    "key_format": "{plan_id}:{action_index}",
+    "header": "Idempotency-Key",
+    "echo_in_response": true
+  },
+  "timeout_seconds": 20,
+  "sandbox": {
+    "mode": "fake-record-echo",
+    "prod_credentials": "absent"
+  }
+}

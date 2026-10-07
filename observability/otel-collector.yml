@@ -1,0 +1,33 @@
+# OpenTelemetry collector (07 hardening, impl §2).
+# API/Worker/RAG/MCP -> OTLP -> collector -> Grafana/Prometheus + traces.
+# Start: docker compose -f docker-compose.yml -f observability/otel-collector.compose.yml up
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+processors:
+  batch: {}
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+
+exporters:
+  prometheus:
+    endpoint: 0.0.0.0:8889
+  logging:
+    verbosity: normal
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [logging]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus, logging]

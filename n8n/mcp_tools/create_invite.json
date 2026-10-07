@@ -1,0 +1,41 @@
+{
+  "name": "create_invite",
+  "version": "actions_v1",
+  "description": "Create a calendar invite in the sandbox calendar. Returns event id.",
+  "host": "google-workspace",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "attendees": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "start": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "end": {
+        "type": "string",
+        "format": "date-time"
+      }
+    },
+    "required": [
+      "attendees",
+      "start",
+      "end"
+    ],
+    "additionalProperties": false
+  },
+  "idempotency": {
+    "key_format": "{plan_id}:{action_index}",
+    "header": "Idempotency-Key",
+    "echo_in_response": true
+  },
+  "timeout_seconds": 20,
+  "sandbox": {
+    "mode": "fake-record-echo",
+    "prod_credentials": "absent"
+  }
+}

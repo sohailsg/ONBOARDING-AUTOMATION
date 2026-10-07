@@ -1,0 +1,10 @@
+{
+  "project_key": "ONB-SANDBOX",
+  "issue_type": "Task",
+  "note": "Test Jira project only until pilot sign-off. create_ticket maps queue->project component, title->summary, body->description.",
+  "fields": {
+    "queue": "components[0]",
+    "title": "summary",
+    "body": "description"
+  }
+}

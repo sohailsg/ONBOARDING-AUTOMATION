@@ -1,0 +1,41 @@
+# 07 hardening alert rules (impl §6 Post-Launch Monitoring).
+# Page on pilot-blocking signals; everything else -> Slack digest (avoids fatigue).
+groups:
+  - name: onboarding-pilot
+    interval: 1m
+    rules:
+      - alert: DLQNonEmpty
+        expr: onboarding_dlq_depth > 0
+        for: 15m
+        labels: {severity: page}
+        annotations:
+          summary: "DLQ depth {{ $value }} for 15m — drain <4h SLO at risk"
+          runbook: docs/runbooks/oncall.md#dlq
+      - alert: FaithfulnessDrop
+        expr: onboarding_chat_avg_confidence < 0.9
+        for: 15m
+        labels: {severity: page}
+        annotations:
+          summary: "Mean chat confidence <0.9 — check RAG/rerank + Langfuse"
+          runbook: docs/runbooks/oncall.md#faithfulness
+      - alert: ServerErrorsSpike
+        expr: sum(rate(onboarding_requests_total{status=~"5.."}[5m])) > 0.02
+        for: 5m
+        labels: {severity: page}
+        annotations:
+          summary: "5xx rate above 2% over 5m"
+          runbook: docs/runbooks/oncall.md#5xx
+      - alert: ExecuteFailureBurst
+        expr: sum(rate(onboarding_jobs_total{job="execute_job",status="failed"}[15m])) > 0
+        for: 10m
+        labels: {severity: page}
+        annotations:
+          summary: "Execute failures in last 15m — check kill-switch + DLQ"
+          runbook: docs/runbooks/kill-switch.md
+      - alert: NeedsAttentionAgeing
+        expr: onboarding_needs_attention_oldest_hours > 24
+        for: 5m
+        labels: {severity: page}
+        annotations:
+          summary: "needs_attention case unresolved >24h — page HR pilot lead"
+          runbook: docs/runbooks/oncall.md#needs-attention
