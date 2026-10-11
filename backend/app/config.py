@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     FIREBASE_PROJECT_ID: str = ""
     # Comma-separated emails granted hr_admin when the token has no role claim.
     HR_ADMIN_EMAILS: str = ""
+    # Region used for policy chat when the caller has no employee profile (e.g. HR admin).
+    DEFAULT_CHAT_REGION: str = ""
     API_HOST: str = "0.0.0.0"
     API_PORT: int = 8000
     ARQ_QUEUE: str = "default"

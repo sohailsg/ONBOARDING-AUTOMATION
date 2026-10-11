@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
@@ -20,7 +21,11 @@ router = APIRouter(prefix="/api/v1/me", tags=["me"])
 
 async def _own_case(session: AsyncSession, user: TokenData) -> tuple[Employee, OnboardingCase]:
     """Row scoping: employee queries force employee_id = token.sub."""
-    employee = await session.get(Employee, user.sub)
+    try:
+        uuid.UUID(user.sub)  # non-UUID subs (Firebase uids) have no profile
+        employee = await session.get(Employee, user.sub)
+    except ValueError:
+        employee = None
     if employee is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="employee profile not found")
     res = await session.execute(

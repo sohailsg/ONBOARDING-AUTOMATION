@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import uuid
 
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -54,10 +55,16 @@ async def policy_chat(
     user: TokenData = Depends(require_roles("employee", "hr_admin")),
     session: AsyncSession = Depends(get_session),
 ) -> ChatResponse:
-    employee = await session.get(Employee, user.sub)
-    region = employee.region if employee else ""
+    # Firebase users (e.g. HR admins) have non-UUID subs and may have no profile.
+    try:
+        uuid.UUID(user.sub)  # non-UUID subs (Firebase uids) have no profile
+        employee = await session.get(Employee, user.sub)
+    except ValueError:
+        employee = None
+    default_region = get_settings().DEFAULT_CHAT_REGION
+    region = employee.region if employee else default_region
     dept = employee.dept if employee else ""
-    employee_id = employee.id if employee else user.sub
+    employee_id = str(employee.id) if employee else user.sub
 
     try:
         result = await rag_answer(payload.question, region, dept)
@@ -84,7 +91,7 @@ async def policy_chat(
                             faithfulness=out.confidence if out.citations else None)
     session.add(
         ChatLog(
-            employee_id=employee_id if employee else user.sub,
+            employee_id=employee.id if employee else None,
             question=scrub_text(payload.question[:2000]),
             answer=scrub_text(out.answer),
             citations=[c.model_dump() for c in out.citations],
