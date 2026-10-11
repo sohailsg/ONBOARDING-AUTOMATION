@@ -41,4 +41,4 @@ EXPOSE 8000
 
 # Release step on first deploy (Render/Railway pre-deploy command):
 #   alembic -c db/alembic.ini upgrade head && python db/seeds/seed_demo.py
-CMD ["sh", "-c", "uvicorn backend.app.main:app --host 0.0.0.0 --port ${API_PORT:-8000}"]
+CMD ["sh", "/app/backend/start.sh"]

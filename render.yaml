@@ -7,8 +7,8 @@ services:
     dockerfilePath: ./Dockerfile.backend
     plan: free
     healthCheckPath: /health
-    dockerCommand: sh -c "arq worker.jobs.WorkerSettings & exec uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT"
     envVars:
+      - { key: START_WORKER, value: "1" }
       - { key: JWT_DEV_STUB, value: "false" }
       - { key: MCP_MODE, value: sandbox }
       - { key: WORKER_FIXTURE_MODE, value: "1" }
