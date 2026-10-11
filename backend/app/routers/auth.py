@@ -20,7 +20,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth import mint_dev_token
+from ..auth import TokenData, get_current_user, mint_dev_token
 from ..config import get_settings
 from ..db import get_session
 from ..models import Employee, OnboardingCase
@@ -67,3 +67,9 @@ async def dev_login(
         sub = case.employee_id
     return DevLoginOut(token=mint_dev_token(payload.role, sub),
                        role=payload.role, sub=sub)
+
+
+@router.get("/whoami", response_model=DevLoginOut)
+async def whoami(user: TokenData = Depends(get_current_user)) -> DevLoginOut:
+    """Resolved identity for the bearer (token echoed empty); drives role routing."""
+    return DevLoginOut(token="", role=user.role, sub=user.sub)

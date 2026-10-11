@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
+import { firebaseEnabled, googleIdToken } from "@/lib/firebase";
 
 /** MVP SSO stub: picks a role cookie. Prod replaces with OIDC → httpOnly JWT. */
 function LoginForm() {
@@ -17,8 +18,17 @@ function LoginForm() {
       // SSO stub: backend binds the role to a real profile and returns the
       // dev credential the API accepts (Authorization header, see lib/api).
       const { api, setApiToken } = await import("@/lib/api");
-      const session = await api.devLogin(role);
-      setApiToken(session.token);
+      let effectiveRole = role;
+      if (firebaseEnabled) {
+        setApiToken(await googleIdToken());
+        effectiveRole = (await api.whoami()).role;
+      } else {
+        const session = await api.devLogin(role);
+        setApiToken(session.token);
+      }
+      document.cookie = `ob_role=${effectiveRole}; path=/; max-age=3600; samesite=lax`;
+      router.push(next);
+      return;
     } catch (e) {
       setError(
         e instanceof Error ? e.message : "Sign-in failed — is the API up?",
@@ -46,20 +56,24 @@ function LoginForm() {
         </p>
       )}
       <div className="card card-hover mt-4 space-y-3">
-        <label className="block text-sm font-medium" htmlFor="role">
-          Role (SSO stub)
-        </label>
-        <select
-          id="role"
-          className="input"
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-        >
-          <option value="employee">Employee</option>
-          <option value="hr_admin">HR admin</option>
-        </select>
+        {!firebaseEnabled && (
+          <>
+            <label className="block text-sm font-medium" htmlFor="role">
+              Role (SSO stub)
+            </label>
+            <select
+              id="role"
+              className="input"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+            >
+              <option value="employee">Employee</option>
+              <option value="hr_admin">HR admin</option>
+            </select>
+          </>
+        )}
         <button className="btn-primary w-full" onClick={signIn}>
-          Continue
+          {firebaseEnabled ? "Sign in with Google" : "Continue"}
         </button>
       </div>
     </main>

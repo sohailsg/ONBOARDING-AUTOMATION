@@ -101,6 +101,8 @@ export const api = {
     }),
   reindex: () =>
     request<void>(`/api/v1/admin/reindex`, { method: "POST" }),
+  whoami: () =>
+    request<{ token: string; role: string; sub: string }>(`/api/v1/auth/whoami`),
   devLogin: (role: string) =>
     request<{ token: string; role: string; sub: string }>(
       `/api/v1/auth/dev-login`,

@@ -1,0 +1,31 @@
+# Render Blueprint: api (+ arq worker in same container) and rag, free tier.
+# Secrets are `sync: false` — enter them in the Render dashboard, never in git.
+services:
+  - type: web
+    name: onboarding-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile.backend
+    plan: free
+    healthCheckPath: /health
+    dockerCommand: sh -c "arq worker.jobs.WorkerSettings & exec uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - { key: JWT_DEV_STUB, value: "false" }
+      - { key: MCP_MODE, value: sandbox }
+      - { key: WORKER_FIXTURE_MODE, value: "1" }
+      - { key: FIREBASE_PROJECT_ID, value: onboarding-automation-95db5 }
+      - { key: DATABASE_URL, sync: false }   # postgresql+asyncpg://...neondb?ssl=require
+      - { key: REDIS_URL, sync: false }      # rediss://default:...@...upstash.io:6379
+      - { key: RAG_BASE_URL, sync: false }   # https://<onboarding-rag>.onrender.com
+      - { key: SERVICE_API_KEY, sync: false }
+      - { key: JWT_SECRET, sync: false }
+      - { key: HR_ADMIN_EMAILS, sync: false }
+  - type: web
+    name: onboarding-rag
+    runtime: docker
+    dockerfilePath: ./Dockerfile.rag
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - { key: RAG_PORT, value: "10000" }
+      - { key: PORT, value: "10000" }
+      - { key: EMBEDDING_BACKEND, value: hash }

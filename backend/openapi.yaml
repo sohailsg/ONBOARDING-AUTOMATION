@@ -878,6 +878,44 @@ paths:
       summary: Dev Login
       tags:
       - auth
+  /api/v1/auth/whoami:
+    get:
+      description: Resolved identity for the bearer (token echoed empty); drives role
+        routing.
+      operationId: whoami_api_v1_auth_whoami_get
+      parameters:
+      - in: header
+        name: authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-Service-Key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Service-Key
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DevLoginOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Whoami
+      tags:
+      - auth
   /api/v1/cases:
     get:
       operationId: list_cases_api_v1_cases_get

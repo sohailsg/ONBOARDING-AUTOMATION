@@ -115,6 +115,7 @@ export const ApiRoutes = {
   retention_dry_run_api_v1_admin_retention_dry_run_get: '/api/v1/admin/retention/dry-run',
   decide_approval_api_v1_approvals__plan_id__post: '/api/v1/approvals/{plan_id}',
   dev_login_api_v1_auth_dev_login_post: '/api/v1/auth/dev-login',
+  whoami_api_v1_auth_whoami_get: '/api/v1/auth/whoami',
   list_cases_api_v1_cases_get: '/api/v1/cases',
   get_plan_api_v1_cases__case_id__plan_get: '/api/v1/cases/{case_id}/plan',
   update_plan_api_v1_cases__case_id__plan_put: '/api/v1/cases/{case_id}/plan',

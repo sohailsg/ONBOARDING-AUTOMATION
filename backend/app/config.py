@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     JWT_ISSUER: str = ""
     JWT_AUDIENCE: str = ""
     SERVICE_API_KEY: str = "dev-service-key"
+    # Firebase Auth: when set, Firebase ID tokens are verified (before dev stub).
+    FIREBASE_PROJECT_ID: str = ""
+    # Comma-separated emails granted hr_admin when the token has no role claim.
+    HR_ADMIN_EMAILS: str = ""
     API_HOST: str = "0.0.0.0"
     API_PORT: int = 8000
     ARQ_QUEUE: str = "default"
