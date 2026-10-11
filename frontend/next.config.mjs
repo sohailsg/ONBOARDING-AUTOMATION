@@ -39,7 +39,7 @@ const nextConfig = {
             // connect-src follows the configured API origin (this box runs
             // the API on :8003, not the :8000 default) + RAG for SSE traces.
             value:
-              `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' ${apiOrigin} http://localhost:8000 http://localhost:8001; img-src 'self' data:;`,
+              `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com ${apiOrigin} http://localhost:8000 http://localhost:8001; img-src 'self' data:; frame-src https://*.firebaseapp.com https://accounts.google.com;`,
           },
         ],
       },

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { OPENAPI_HASH } from "@/lib/api";
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+  process.env.NEXT_PUBLIC_API_URL ?? "";
 
 /**
  * Rollback §6: client detects OpenAPI hash drift.

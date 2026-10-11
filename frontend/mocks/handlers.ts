@@ -1,6 +1,6 @@
-import plan from "../../tests/fixtures/sample_plan.json";
-import chat from "../../tests/fixtures/chat_sample.json";
-import traces from "../../tests/fixtures/trace_events.json";
+import plan from "./fixtures/sample_plan.json";
+import chat from "./fixtures/chat_sample.json";
+import traces from "./fixtures/trace_events.json";
 import { http, HttpResponse } from "msw";
 
 const CASE = {
