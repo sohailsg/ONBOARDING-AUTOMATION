@@ -6,10 +6,15 @@ import asyncio
 import os
 import uuid
 
-os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
-os.environ["REDIS_URL"] = ""
-os.environ["RAG_BASE_URL"] = "http://127.0.0.1:9"
-os.environ["WORKER_FIXTURE_MODE"] = "1"
+# NOTE: setdefault (never clobber): collection imports this module before any
+# test runs, and an unconditional assignment here used to wipe a developer's
+# live DATABASE_URL, silently skipping the infra suite (tests/test_infra.py)
+# in shared pytest processes. This module builds its own sqlite factory
+# below, so it never needs to force the process env.
+os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+os.environ.setdefault("REDIS_URL", "")
+os.environ.setdefault("RAG_BASE_URL", "http://127.0.0.1:9")
+os.environ.setdefault("WORKER_FIXTURE_MODE", "1")
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine

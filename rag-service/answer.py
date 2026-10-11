@@ -33,8 +33,20 @@ STOPWORDS = frozenset(
 )
 
 
+def _stem(tok: str) -> str:
+    """Porter-lite: identical rule on query AND context, so plural/singular
+    mismatches ("leaves"/"leave") meet while same-form tokens are untouched."""
+    if len(tok) <= 3 or tok.endswith("ss"):
+        return tok
+    if tok.endswith("ies"):
+        return tok[:-3] + "y"
+    if tok.endswith("s"):
+        return tok[:-1]
+    return tok
+
+
 def _content_tokens(text: str) -> set[str]:
-    return {t for t in tokenize(text) if t not in STOPWORDS and len(t) > 1}
+    return {_stem(t) for t in tokenize(text) if t not in STOPWORDS and len(t) > 1}
 
 
 def _sentences(text: str) -> list[str]:
@@ -81,7 +93,11 @@ def _ollama_answer(query: str, chunks: list[dict], model: str, host: str) -> str
         with httpx.Client(timeout=60.0) as client:
             r = client.post(
                 f"{host.rstrip('/')}/api/generate",
-                json={"model": model, "prompt": prompt, "stream": False},
+                json={"model": model, "prompt": prompt, "stream": False,
+                      # Greedy decoding: identical queries must give identical
+                      # answers (the chat log showed cited/abstain flips from
+                      # sampling variance tripping the confidence threshold).
+                      "options": {"temperature": 0, "seed": 42}},
             )
             r.raise_for_status()
             text = (r.json().get("response") or "").strip()
@@ -99,14 +115,19 @@ def _confidence(query: str, chunks: list[dict], answer_text: str) -> float:
         top1 = 1.0 / (1.0 + pow(2.71828, -top1))
     score_c = min(1.0, top1 / 0.6)
     # Content-word coverage: is the retrieved context about the query?
+    # Both sides stemmed identically so plurals meet ("leaves"/"leave").
     qtok = _content_tokens(query) or set(tokenize(query))
-    ctx = set(tokenize(" ".join(c.get("text", "") for c in chunks[:5])))
+    ctx = {_stem(t) for t in tokenize(" ".join(c.get("text", "") for c in chunks[:5]))}
     cover_c = len(qtok & ctx) / max(1, len(qtok))
     # Grounding: is the answer built from the context?
     ans_tok = set(tokenize(answer_text))
     ground = len(ans_tok & ctx) / max(1, len(ans_tok))
     conf = 0.30 * score_c + 0.50 * cover_c + 0.20 * ground
     # Hard floors protect the abstain path for out-of-scope queries.
+    # The 0.5 coverage floor is calibrated: answerable questions cover >=50%
+    # of content words on both embedding backends, junk tops out at 40%.
+    if cover_c < 0.5:
+        conf = min(conf, 0.50)
     if cover_c < 0.2:
         conf = min(conf, 0.30)
     if top1 < 0.05:

@@ -62,9 +62,24 @@ def retrieve_ep(req: RetrieveRequest) -> RetrieveResponse:
     return RetrieveResponse(chunks=[RetrievedChunk(**c) for c in chunks])
 
 
+@app.post("/api/v1/retrieve", response_model=RetrieveResponse)
+def retrieve_v1_ep(req: RetrieveRequest) -> RetrieveResponse:
+    """Versioned alias of /retrieve (worker policy_retrieve contract)."""
+    return retrieve_ep(req)
+
+
 @app.post("/answer", response_model=ChatResponse)
 def answer_ep(req: AnswerRequest) -> ChatResponse:
-    res = answer_fn(req.query, [c.model_dump() for c in req.chunks])
+    query = req.query or req.question
+    chunks = [c.model_dump() for c in req.chunks]
+    if not chunks and query and req.region:
+        # Gateway (02) calls /answer with {question, region, dept} and no
+        # chunks — retrieve server-side, then answer (same as /chat).
+        try:
+            chunks = retrieve_fn(query, req.region, req.dept or "all")
+        except Exception:
+            chunks = []
+    res = answer_fn(query, chunks)
     return ChatResponse(
         answer=res["answer"],
         citations=[Citation(**c) for c in res["citations"]],

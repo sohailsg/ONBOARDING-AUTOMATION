@@ -1,0 +1,44 @@
+# Backend gateway + Arq worker + executor (02/04/05).
+# One image, two commands: `api` (uvicorn) or `worker` (arq).
+# Build from repo root:  docker build -f Dockerfile.backend .   # from onboarding/
+FROM python:3.11-slim AS base
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /app
+
+# psycopg2 needs pg headers at build time only.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      libpq-dev gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY backend/requirements.txt /tmp/backend-requirements.txt
+RUN pip install --upgrade pip && pip install -r /tmp/backend-requirements.txt \
+    && pip install psycopg2-binary alembic
+
+# App code: gateway + worker + executor + migrations + seeds.
+COPY backend /app/backend
+COPY worker /app/worker
+COPY db /app/db
+COPY tests /app/tests
+
+# Runtime defaults (override per env). No-GPU demo mode is the default for
+# free tiers: hash embeddings need no Ollama, fixture plans need no LLM.
+# Flip WORKER_FIXTURE_MODE / EMBEDDING_BACKEND on a GPU box for live models.
+ENV DATABASE_URL="postgresql+asyncpg://app:app@db:5432/onboarding" \
+    REDIS_URL="redis://redis:6379/0" \
+    RAG_BASE_URL="http://rag:8001" \
+    JWT_DEV_STUB=true \
+    API_PORT=8000 \
+    WORKER_CONCURRENCY=4 \
+    WORKER_FIXTURE_MODE=1 \
+    EMBEDDING_BACKEND=hash \
+    MCP_MODE=sandbox
+
+EXPOSE 8000
+
+# Release step on first deploy (Render/Railway pre-deploy command):
+#   alembic -c db/alembic.ini upgrade head && python db/seeds/seed_demo.py
+CMD ["sh", "-c", "uvicorn backend.app.main:app --host 0.0.0.0 --port ${API_PORT:-8000}"]

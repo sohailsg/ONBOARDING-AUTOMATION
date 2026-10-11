@@ -3,18 +3,19 @@
 from __future__ import annotations
 
 from datetime import datetime
+from enum import Enum
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-CaseStatus = Literal[
-    "pending_ingestion",
-    "agent_processing",
-    "awaiting_hr_approval",
-    "executing",
-    "needs_attention",
-    "active",
-]
+
+class CaseStatus(str, Enum):
+    PENDING_INGESTION = "pending_ingestion"
+    AGENT_PROCESSING = "agent_processing"
+    AWAITING_HR_APPROVAL = "awaiting_hr_approval"
+    EXECUTING = "executing"
+    NEEDS_ATTENTION = "needs_attention"
+    ACTIVE = "active"
 
 
 class HireRecord(BaseModel):
@@ -28,17 +29,19 @@ class HireRecord(BaseModel):
     start_date: str = Field(min_length=1)  # YYYY-MM-DD, validated lightly (01 owns canonical types)
 
 
-class CaseOut(BaseModel):
+class Case(BaseModel):
     id: str
     employee_id: str
-    status: str
+    status: CaseStatus
     current_plan_version: int
     idempotency_key: str
-    session_id: str
+    # Nullable: rows created before migration 0002 (backend contract) carry
+    # no session_id; the column is nullable in DDL too.
+    session_id: str | None = None
 
 
 class CasePage(BaseModel):
-    items: list[CaseOut]
+    items: list[Case]
     page: int
     page_size: int
     total: int
@@ -55,7 +58,7 @@ class PlanIn(BaseModel):
     actions: list[ActionPayload] = Field(default_factory=list)
 
 
-class PlanOut(BaseModel):
+class Plan(BaseModel):
     id: str
     case_id: str
     version: int
@@ -69,7 +72,7 @@ class ApprovalDecision(BaseModel):
     comment: str = ""
 
 
-class ApprovalOut(BaseModel):
+class Approval(BaseModel):
     id: str
     plan_id: str
     approver_id: str
@@ -81,7 +84,7 @@ class ChecklistPatch(BaseModel):
     completed: bool
 
 
-class ChecklistItemOut(BaseModel):
+class ChecklistItem(BaseModel):
     id: str
     title: str
     due_day: int
@@ -112,3 +115,11 @@ class TraceEvent(BaseModel):
     case_id: str
     session_id: str
     id: int | None = None
+
+
+# Back-compat aliases while routers finish the rename to Case/Plan/
+# ChecklistItem/Approval (W2 in flight): identical shapes.
+CaseOut = Case
+PlanOut = Plan
+ChecklistItemOut = ChecklistItem
+ApprovalOut = Approval

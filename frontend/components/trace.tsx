@@ -19,28 +19,28 @@ export function TraceMonitor({ caseId }: { caseId: string }) {
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Live trace</h2>
         <span
-          className={`badge ${connected ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
+          className={`badge border ${connected ? "border-emerald-300/30 bg-emerald-400/10 text-emerald-200" : "border-red-300/30 bg-red-400/10 text-red-200 motion-safe:animate-pulse-soft"}`}
           role="status"
         >
           {connected ? "connected" : "reconnecting…"}
         </span>
       </div>
       {!connected && (
-        <p role="alert" className="mt-2 rounded bg-red-50 p-2 text-sm text-red-800">
+        <p role="alert" className="alert-error mt-2">
           Stream disconnected — retrying with backoff (attempt {reconnects}). Last events replayed
           from audit on reconnect.
         </p>
       )}
-      <ol className="mt-2 max-h-80 space-y-1 overflow-y-auto font-mono text-xs" aria-live="polite">
+      <ol className="console mt-2 max-h-80 space-y-1 overflow-y-auto" aria-live="polite">
         {events.map((e, i) => (
-          <li key={i} className="rounded bg-slate-50 px-2 py-1">
-            <span className="text-slate-400">{e.ts}</span>{" "}
-            <span className="font-semibold text-brand-700">{e.step}</span>{" "}
+          <li key={i} className="console-row">
+            <span className="text-slate-500">{e.ts}</span>{" "}
+            <span className="font-semibold text-cyan-300">{e.step}</span>{" "}
             <span>{e.message}</span>
           </li>
         ))}
         {events.length === 0 && (
-          <li className="text-slate-500">Waiting for first event (p95 target &lt; 2s)…</li>
+          <li className="faint">Waiting for first event (p95 target &lt; 2s)…</li>
         )}
       </ol>
       <div ref={bottomRef} />

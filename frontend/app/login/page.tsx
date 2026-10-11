@@ -9,21 +9,43 @@ function LoginForm() {
   const params = useSearchParams();
   const next = params.get("next") ?? "/hub";
   const [role, setRole] = useState("employee");
+  const [error, setError] = useState("");
 
-  function signIn() {
+  async function signIn() {
+    setError("");
+    try {
+      // SSO stub: backend binds the role to a real profile and returns the
+      // dev credential the API accepts (Authorization header, see lib/api).
+      const { api, setApiToken } = await import("@/lib/api");
+      const session = await api.devLogin(role);
+      setApiToken(session.token);
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Sign-in failed — is the API up?",
+      );
+      return;
+    }
     document.cookie = `ob_role=${role}; path=/; max-age=86400; samesite=lax`;
     router.push(next);
   }
 
   return (
-    <main id="main" className="mx-auto max-w-md px-4 py-16">
-      <h1 className="text-2xl font-bold">Sign in</h1>
+    <main id="main" className="mx-auto max-w-md px-4 py-16 motion-safe:animate-rise">
+      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300/80">
+        Airlock
+      </p>
+      <h1 className="title-gradient mt-2 text-3xl font-bold">Sign in</h1>
       {params.get("error") === "forbidden" && (
-        <p role="alert" className="mt-2 text-sm text-red-700">
+        <p role="alert" className="mt-2 text-sm text-red-300">
           Forbidden — contact HR.
         </p>
       )}
-      <div className="card mt-4 space-y-3">
+      {error && (
+        <p role="alert" className="mt-2 text-sm text-red-300">
+          {error}
+        </p>
+      )}
+      <div className="card card-hover mt-4 space-y-3">
         <label className="block text-sm font-medium" htmlFor="role">
           Role (SSO stub)
         </label>

@@ -26,7 +26,7 @@ except ImportError:  # pragma: no cover - fallback keeps gateway importable stan
 from ..audit import write_audit
 from ..auth import TokenData, require_roles
 from ..db import get_session
-from ..models import Action, OnboardingCase, Plan
+from ..models import Action, Plan
 from ._shared import get_case_or_404
 
 router = APIRouter(prefix="/api/v1/execute", tags=["execute"])

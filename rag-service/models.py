@@ -31,7 +31,8 @@ class RetrieveResponse(BaseModel):
 
 
 class AnswerRequest(BaseModel):
-    query: str
+    query: str = ""
+    question: str = ""  # gateway (02) sends `question`; same meaning as query
     region: str = ""
     dept: str = "all"
     chunks: list[RetrievedChunk] = Field(default_factory=list)

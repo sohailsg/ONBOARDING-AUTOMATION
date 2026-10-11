@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import datetime as dt
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass

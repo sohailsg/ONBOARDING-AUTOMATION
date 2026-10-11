@@ -1,0 +1,38 @@
+# CrewAI plan worker (04): drafts versioned, cited plans. Never executes.
+# Build from repo root:  docker build -f Dockerfile.worker .   # from onboarding/
+# Run: docker run ... onboarding-worker arq worker.jobs.WorkerSettings
+FROM python:3.11-slim AS base
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      libpq-dev gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Pinned free-stack deps first for layer cache.
+COPY worker/requirements.txt /tmp/worker-requirements.txt
+RUN pip install --upgrade pip && pip install -r /tmp/worker-requirements.txt \
+    && pip install psycopg2-binary
+
+# Worker imports backend.app.* (shared models/audit/SSE) — ship both trees.
+COPY backend /app/backend
+COPY worker /app/worker
+COPY db /app/db
+
+# Fixture plans by default (no GPU on free tiers). On an Ollama box, unset
+# WORKER_FIXTURE_MODE for the live CrewAI crew (needs OLLAMA_HOST).
+ENV DATABASE_URL="postgresql+asyncpg://app:app@db:5432/onboarding" \
+    REDIS_URL="redis://redis:6379/0" \
+    RAG_BASE_URL="http://rag:8001" \
+    OLLAMA_HOST=http://ollama:11434 \
+    OLLAMA_CHAT_MODEL=llama3.1:8b \
+    WORKER_CONCURRENCY=4 \
+    WORKER_FIXTURE_MODE=1 \
+    MAX_STEPS_PER_RUN=12 \
+    MAX_TOKENS_PER_RUN=30000
+
+CMD ["arq", "worker.jobs.WorkerSettings"]

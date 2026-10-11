@@ -90,26 +90,26 @@ export function Timeline() {
     <section aria-label="30-day timeline" className="card">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Your first 30 days</h2>
-        <span aria-label={`${progress}% complete`} className="text-sm text-slate-600">
+        <span aria-label={`${progress}% complete`} className="text-sm text-slate-300">
           {progress}% complete
         </span>
       </div>
       <div
-        className="mt-2 h-2 overflow-hidden rounded bg-slate-200"
+        className="mt-2 h-2 overflow-hidden rounded-full border border-white/10 bg-black/40"
         role="progressbar"
         aria-valuenow={progress}
         aria-valuemin={0}
         aria-valuemax={100}
       >
-        <div className="h-full bg-brand-600" style={{ width: `${progress}%` }} />
+        <div className="h-full rounded-full shadow-glow-cyan" style={{ width: `${progress}%`, backgroundImage: "linear-gradient(90deg,#6366f1,#22d3ee)" }} />
       </div>
 
       {milestones.map((m) => (
         <div key={m.phase} className="mt-4">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+          <h3 className="text-sm font-semibold uppercase tracking-widest text-indigo-200/80">
             {m.phase}
           </h3>
-          <ul className="mt-1 divide-y divide-slate-100">
+          <ul className="mt-1 divide-y divide-white/5">
             {m.items.map((item) => {
               const done = !!item.completed_at;
               return (
@@ -122,18 +122,18 @@ export function Timeline() {
                     onChange={(e) =>
                       tick.mutate({ id: item.id, completed: e.target.checked })
                     }
-                    className="h-4 w-4 accent-blue-700"
+                    className="input-check"
                   />
-                  <span className={done ? "text-slate-400 line-through" : ""}>
+                  <span className={done ? "text-slate-500 line-through" : "text-slate-100"}>
                     {item.title}
                   </span>
                   {item.mandatory ? (
-                    <span className="badge bg-amber-100 text-amber-800">mandatory</span>
+                    <span className="badge border-amber-300/30 bg-amber-400/10 text-amber-200">mandatory</span>
                   ) : (
-                    <span className="badge bg-slate-100 text-slate-600">optional</span>
+                    <span className="badge border-white/10 bg-white/[0.06] text-slate-300">optional</span>
                   )}
                   {failedId === item.id && (
-                    <span role="alert" className="text-xs text-red-700">
+                    <span role="alert" className="text-xs text-red-300">
                       Update failed — reverted. Retry.
                     </span>
                   )}

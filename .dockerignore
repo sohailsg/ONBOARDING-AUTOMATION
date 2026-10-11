@@ -1,0 +1,17 @@
+# Keep images lean + secret-free.
+__pycache__/
+*.pyc
+.pytest_cache/
+node_modules/
+.next/
+frontend/test-results/
+data/chroma/
+*.db
+.git/
+.github/
+.env
+.env.*
+!.env.example
+frontend/
+*.md
+!README.md

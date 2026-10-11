@@ -35,9 +35,13 @@ CASE_STATUSES = (
     "active",
 )
 
-APPROVAL_DECISIONS = ("approved", "rejected", "changes_requested")
+APPROVAL_DECISIONS = (
+    "approved", "approve", "rejected", "reject", "changes_requested",
+)
 
-ACTION_STATUSES = ("pending", "running", "done", "failed", "skipped")
+# Executor words (spec 05 §7) are canonical; `done`/`skipped` are the legacy
+# 01-DDL equivalents still accepted so old rows keep validating.
+ACTION_STATUSES = ("pending", "running", "succeeded", "done", "failed", "halted", "skipped")
 
 
 class Base(DeclarativeBase):
@@ -99,6 +103,8 @@ class OnboardingCase(Base):
     idempotency_key: Mapped[str] = mapped_column(
         Text, nullable=False, unique=True
     )
+    # 0002: trace scope (trace:{session_id} pub/sub, SSE fan-out).
+    session_id: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -171,6 +177,9 @@ class Action(Base):
     payload: Mapped[dict] = mapped_column(
         JSONB, nullable=False, default=dict, server_default="{}"
     )
+    # 0-based position within the plan; the executor replays in seq order.
+    # NULL only for rows predating migration 0002 (backfilled there).
+    seq: Mapped[int | None] = mapped_column(Integer, nullable=True)
     status: Mapped[str] = mapped_column(
         Text, nullable=False, default="pending", server_default="pending"
     )
@@ -228,12 +237,16 @@ class AuditEvent(Base):
     event_metadata: Mapped[dict] = mapped_column(
         "metadata", JSONB, nullable=False, default=dict, server_default="{}"
     )
+    # 0002: case-scoped audit trail (nullable, no FK — audit never blocks).
+    case_id: Mapped[str | None] = mapped_column(Text, nullable=True)
+    session_id: Mapped[str | None] = mapped_column(Text, nullable=True)
     ts: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
 
 Index("ix_audit_events_ts", AuditEvent.ts)
+Index("ix_audit_events_case", AuditEvent.case_id)
 
 
 class ChatLog(Base):

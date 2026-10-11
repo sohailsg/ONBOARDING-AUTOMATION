@@ -12,10 +12,11 @@ from slowapi.errors import RateLimitExceeded
 
 from .config import get_settings
 from .db import get_engine
+from .errors import register_error_handlers
 from .metrics import observe_request, render_prometheus
 from .models import Base
 from .ratelimit import limiter
-from .routers import admin, approvals, cases, chat, execute, me, onboarding, plans
+from .routers import admin, approvals, auth, cases, chat, execute, me, onboarding, plans
 
 log = logging.getLogger("onboarding.gateway")
 
@@ -56,9 +57,29 @@ def create_app() -> FastAPI:
     app = FastAPI(title="Onboarding Gateway API", version="0.2.0-w2", lifespan=lifespan)
     app.state.limiter = limiter
 
+    # Browser UI (06) calls the API cross-origin in dev (3000 -> 800x).
+    # Credentials + Authorization header must be allowed or every fetch
+    # fails client-side ("Failed to fetch"). Prod fronts both behind one
+    # origin; keep the allow-list tight outside the dev stub.
+    from fastapi.middleware.cors import CORSMiddleware
+
+    try:
+        dev = bool(get_settings().JWT_DEV_STUB)
+    except Exception:
+        dev = True
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"] if dev else [],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     @app.exception_handler(RateLimitExceeded)
     async def _ratelimit(request: Request, exc: RateLimitExceeded):
         return JSONResponse(status_code=429, content={"detail": "rate limit exceeded"})
+
+    register_error_handlers(app)  # spec §7: 400 validation details, 5xx JSON+Sentry
 
     @app.get("/health")
     async def health() -> dict:
@@ -84,6 +105,7 @@ def create_app() -> FastAPI:
             observe_request(request.url.path, status, (time.perf_counter() - start) * 1000)
 
     app.include_router(onboarding.router)
+    app.include_router(auth.router)
     app.include_router(cases.router)
     app.include_router(plans.router)
     app.include_router(approvals.router)

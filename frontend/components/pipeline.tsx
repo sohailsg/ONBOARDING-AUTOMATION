@@ -16,6 +16,16 @@ const STATUSES: (CaseStatus | "")[] = [
   "active",
 ];
 
+/** Status -> glowing orbital pill (presentation only; text unchanged). */
+const STATUS_PILL: Record<string, string> = {
+  pending_ingestion: "st st-pending_ingestion",
+  agent_processing: "st st-agent_processing",
+  awaiting_hr_approval: "st st-awaiting_hr_approval",
+  executing: "st st-executing",
+  needs_attention: "st st-needs_attention",
+  active: "st st-active",
+};
+
 /** F-UI-4: pipeline table with ?status= filter parity. */
 export function Pipeline() {
   const [status, setStatus] = useState<CaseStatus | "">("");
@@ -45,9 +55,9 @@ export function Pipeline() {
         </label>
       </div>
 
-      {isLoading && <p aria-busy="true" className="mt-3 text-sm">Loading cases…</p>}
+      {isLoading && <p aria-busy="true" className="muted mt-3 text-sm motion-safe:animate-pulse-soft">Loading cases…</p>}
       {isError && (
-        <p role="alert" className="mt-3 text-sm text-red-700">
+        <p role="alert" className="mt-3 text-sm text-red-300">
           Failed to load. <button className="btn-ghost ml-2" onClick={() => refetch()}>Retry</button>
         </p>
       )}
@@ -55,7 +65,7 @@ export function Pipeline() {
       <div className="mt-3 overflow-x-auto">
         <table className="w-full min-w-[560px] text-left text-sm">
           <thead>
-            <tr className="border-b text-slate-500">
+            <tr className="border-b border-white/10 text-slate-400">
               <th scope="col" className="py-2 pr-2">Case</th>
               <th scope="col" className="py-2 pr-2">Employee</th>
               <th scope="col" className="py-2 pr-2">Status</th>
@@ -64,23 +74,23 @@ export function Pipeline() {
           </thead>
           <tbody>
             {(data?.items ?? []).map((c) => (
-              <tr key={c.id} className="border-b last:border-0 hover:bg-slate-50">
+              <tr key={c.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.04]">
                 <td className="py-2 pr-2">
-                  <Link className="underline" href={`/admin/cases/${c.id}`}>
+                  <Link className="text-cyan-200 underline decoration-cyan-200/40 underline-offset-2 hover:text-white" href={`/admin/cases/${c.id}`}>
                     {c.id?.slice(0, 8)}…
                   </Link>
                 </td>
-                <td className="py-2 pr-2">{c.employee_id?.slice(0, 8)}…</td>
+                <td className="py-2 pr-2 text-slate-300">{c.employee_id?.slice(0, 8)}…</td>
                 <td className="py-2 pr-2">
-                  <span className="badge bg-slate-100 text-slate-700">{c.status}</span>
+                  <span className={STATUS_PILL[c.status] ?? "st st-pending_ingestion"}>{c.status}</span>
                 </td>
-                <td className="py-2">v{c.current_plan_version ?? "—"}</td>
+                <td className="py-2 text-slate-300">v{c.current_plan_version ?? "—"}</td>
               </tr>
             ))}
           </tbody>
         </table>
         {data && data.items.length === 0 && (
-          <p className="mt-2 text-sm text-slate-500">No cases with this status.</p>
+          <p className="faint mt-2 text-sm">No cases with this status.</p>
         )}
       </div>
     </section>

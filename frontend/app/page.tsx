@@ -2,9 +2,12 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <main id="main" className="mx-auto max-w-3xl px-4 py-16">
-      <h1 className="text-3xl font-bold">Employee Onboarding</h1>
-      <p className="mt-2 text-slate-600">
+    <main id="main" className="mx-auto max-w-3xl px-4 py-16 motion-safe:animate-rise">
+      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300/80">
+        Mission control
+      </p>
+      <h1 className="title-gradient mt-2 text-4xl font-bold">Employee Onboarding</h1>
+      <p className="muted mt-2">
         Role-gated workspace. Sign in, then continue to your hub.
       </p>
       <div className="mt-6 flex flex-wrap gap-3">

@@ -46,6 +46,20 @@ def _is_allowlisted(line: str) -> bool:
     return any(s.lower() in low for s in ALLOWLIST_SUBSTRINGS)
 
 
+def _is_tracked(root: Path, path: Path) -> bool:
+    """True if git tracks the file (only tracked files can leak via commits)."""
+    import subprocess
+
+    try:
+        proc = subprocess.run(
+            ["git", "ls-files", "--error-unmatch", str(path.relative_to(root))],
+            cwd=root, capture_output=True, timeout=15,
+        )
+        return proc.returncode == 0
+    except Exception:
+        return True  # fail closed when git is unavailable
+
+
 def scan(root: Path) -> list[str]:
     findings: list[str] = []
     for path in sorted(root.rglob("*")):
@@ -58,12 +72,16 @@ def scan(root: Path) -> list[str]:
         rel = path.relative_to(root).as_posix()
         if rel in ALLOWLIST_FILES:
             continue
-        # Committed env files (other than examples) are themselves a finding.
+        # Env files (other than examples) are a finding only when git tracks
+        # them. A local untracked .env (gitignored) is the documented workflow
+        # (`cp .env.example .env`) and must not fail the scan.
         if rel == ".env" or re.fullmatch(r"\.env\..+", rel) and rel != ".env.example":
-            findings.append(f"{rel}: committed env file must not be checked in")
+            if _is_tracked(root, path):
+                findings.append(f"{rel}: committed env file must not be checked in")
             continue
         if path.name == ".env" or (path.name.startswith(".env.") and path.name != ".env.example"):
-            findings.append(f"{rel}: committed env file must not be checked in")
+            if _is_tracked(root, path):
+                findings.append(f"{rel}: committed env file must not be checked in")
             continue
         try:
             text = path.read_text(encoding="utf-8", errors="strict")

@@ -36,7 +36,8 @@ HALTED = "halted"
 RUNNING = "running"
 PENDING = "pending"
 
-# Legacy 01-DDL equivalents (db/models.py CHECK: pending|running|done|failed|skipped).
+# Legacy equivalents (pre-0002 rows may still read `done`/`skipped`;
+# migration 0002 widened the CHECK to the canonical words used here).
 _DONE_EQUIVALENT = {"succeeded", "done"}
 _HALTED_EQUIVALENT = {"halted", "skipped"}
 _TERMINAL = _DONE_EQUIVALENT | {FAILED} | _HALTED_EQUIVALENT
@@ -65,11 +66,13 @@ async def _default_sleep(seconds: float) -> None:
 def _ordered_actions(rows: list[Any]) -> list[tuple[int, Any]]:
     """Deterministic execution order with stable replay.
 
-    Rows carrying an idempotency_key of ``{plan_id}:{idx}`` sort by idx so a
-    re-run replays the original order. Rows without one keep fetch order and
-    are assigned ``{plan_id}:{idx}`` on first execution (persisted when the
-    column exists).
+    Primary: ``seq`` (migration 0002; assigned by PUT /plan at creation).
+    Fallback for pre-0002 rows without seq: an idempotency_key of
+    ``{plan_id}:{idx}`` sorts by idx; rows with neither keep fetch order.
     """
+    seqs = [getattr(r, "seq", None) for r in rows]
+    if rows and all(s is not None for s in seqs):
+        return sorted(((int(s), r) for s, r in zip(seqs, rows) if s is not None), key=lambda t: t[0])
     keyed: list[tuple[int, Any]] = []
     unkeyed: list[Any] = []
     for row in rows:
@@ -84,9 +87,6 @@ def _ordered_actions(rows: list[Any]) -> list[tuple[int, Any]]:
         else:
             keyed.append((idx, row))
     keyed.sort(key=lambda t: t[0])
-    if keyed and not unkeyed:
-        return keyed
-    ordered = [r for _, r in keyed] + unkeyed
     base = (max((i for i, _ in keyed), default=-1) + 1) if keyed else 0
     out = list(keyed)
     for n, row in enumerate(unkeyed, start=base):

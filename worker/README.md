@@ -15,7 +15,7 @@ Ollama chat model only (`OLLAMA_CHAT_MODEL`, default `llama3.1:8b`). No Anthropi
 | `jobs.py` | 4.4 Arq `plan_job(case_id, session_id)` — status machine, versioned insert, traces, audit |
 | `config.py` | 4.5 env-driven caps (`MAX_STEPS_PER_RUN=12`, `MAX_TOKENS_PER_RUN=30000`), cache TTL |
 | `tracing.py` | 4.5 trace fan-out + per-case cost/latency log |
-| `prompts.py` | versioned system/task prompts (`PROMPT_VERSION=v1`) |
+| `prompts.py` | versioned system/task prompts (`PROMPT_VERSION=v4`) |
 | `llm.py` | CrewAI LLM factory (API-drift isolation wrapper) |
 
 ## Run

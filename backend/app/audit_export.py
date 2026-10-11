@@ -9,6 +9,7 @@ from __future__ import annotations
 import csv
 import io
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -57,11 +58,11 @@ async def check_case_completeness(session: AsyncSession, case_id: str) -> dict:
     """
     plans = (await session.execute(select(Plan).where(Plan.case_id == case_id))).scalars().all()
     plan_ids = [p.id for p in plans]
-    approvals: list = []
-    actions: list = []
+    approvals: list[Any] = []
+    actions: list[Any] = []
     if plan_ids:
-        approvals = (await session.execute(select(Approval).where(Approval.plan_id.in_(plan_ids)))).scalars().all()
-        actions = (await session.execute(select(Action).where(Action.plan_id.in_(plan_ids)))).scalars().all()
+        approvals = list((await session.execute(select(Approval).where(Approval.plan_id.in_(plan_ids)))).scalars().all())
+        actions = list((await session.execute(select(Action).where(Action.plan_id.in_(plan_ids)))).scalars().all())
     events = (await session.execute(select(AuditEvent).where(AuditEvent.case_id == case_id))).scalars().all()
     blobs = " ".join(f"{e.event} {e.entity}" for e in events)
 

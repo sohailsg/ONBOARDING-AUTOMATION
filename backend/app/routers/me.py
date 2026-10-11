@@ -4,16 +4,16 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import write_audit
 from ..auth import TokenData, require_roles
 from ..db import get_session
-from ..models import ChecklistItem, Employee, OnboardingCase, Plan
-from ..schemas import ChecklistItemOut, ChecklistPatch, PlanOut
-from ._shared import plan_out
+from ..models import ChecklistItem as ChecklistItemRow, Employee, OnboardingCase, Plan as PlanRow
+from ..schemas import ChecklistItem, ChecklistPatch, Plan
+from ._shared import client_ip, plan_out
 
 router = APIRouter(prefix="/api/v1/me", tags=["me"])
 
@@ -32,16 +32,16 @@ async def _own_case(session: AsyncSession, user: TokenData) -> tuple[Employee, O
     return employee, case
 
 
-@router.get("/roadmap", response_model=PlanOut)
+@router.get("/roadmap", response_model=Plan)
 async def get_roadmap(
     user: TokenData = Depends(require_roles("employee", "hr_admin")),
     session: AsyncSession = Depends(get_session),
-) -> PlanOut:
+) -> Plan:
     _, case = await _own_case(session, user)
     if case.current_plan_version <= 0:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="no plan yet")
     res = await session.execute(
-        select(Plan).where(Plan.case_id == case.id, Plan.version == case.current_plan_version)
+        select(PlanRow).where(PlanRow.case_id == case.id, PlanRow.version == case.current_plan_version)
     )
     plan = res.scalars().first()
     if plan is None:
@@ -49,16 +49,17 @@ async def get_roadmap(
     return await plan_out(session, plan)
 
 
-@router.patch("/checklist/{item_id}", response_model=ChecklistItemOut)
+@router.patch("/checklist/{item_id}", response_model=ChecklistItem)
 async def tick_checklist(
     item_id: str,
     payload: ChecklistPatch,
+    request: Request,
     if_match: str | None = Header(default=None, alias="If-Match"),
     user: TokenData = Depends(require_roles("employee", "hr_admin")),
     session: AsyncSession = Depends(get_session),
-) -> ChecklistItemOut:
+) -> ChecklistItem:
     _, case = await _own_case(session, user)
-    item = await session.get(ChecklistItem, item_id)
+    item = await session.get(ChecklistItemRow, item_id)
     if item is None or item.case_id != case.id:
         # Cross-employee access collapses to 403 (must not reveal existence).
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="not your checklist item")
@@ -76,11 +77,11 @@ async def tick_checklist(
         item.completed_at = None
     await write_audit(
         session, actor=f"{user.role}:{user.sub}", event="checklist.ticked", entity=f"checklist:{item.id}",
-        metadata={"completed": payload.completed, "mandatory": item.mandatory},
+        metadata={"completed": payload.completed, "mandatory": item.mandatory, "ip": client_ip(request)},
         case_id=case.id, session_id=case.session_id,
     )
     await session.commit()
-    return ChecklistItemOut(
+    return ChecklistItem(
         id=item.id, title=item.title, due_day=item.due_day,
         mandatory=item.mandatory, completed_at=item.completed_at,
     )

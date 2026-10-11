@@ -18,6 +18,12 @@ from db.seeds.seed_demo import seed
 
 pytestmark = pytest.mark.infra
 
+# Snapshot at import: other suites (e.g. backend/tests/test_gateway.py) set
+# DATABASE_URL at module-import (collection) time. The alembic subprocess
+# below must always target the real Postgres, whatever the process env
+# becomes later.
+_IMPORT_TIME_DATABASE_URL = os.environ.get("DATABASE_URL")
+
 
 def _engine():
     try:
@@ -130,10 +136,14 @@ def test_audit_model_table_name_matches_migration():
 def test_migrations_render_offline_both_directions(tmp_path):
     """Downgrade path renders clean SQL (safe: never touches live data)."""
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    env = dict(os.environ)
+    if _IMPORT_TIME_DATABASE_URL:
+        # Immune to collection-time env mutation by other test modules.
+        env["DATABASE_URL"] = _IMPORT_TIME_DATABASE_URL
     for cmd in ("upgrade base:head --sql", "downgrade head:base --sql"):
         proc = subprocess.run(
             ["alembic", "-c", "db/alembic.ini", *cmd.split()],
-            cwd=root, capture_output=True, text=True, timeout=60,
+            cwd=root, capture_output=True, text=True, timeout=60, env=env,
         )
         assert proc.returncode == 0, proc.stderr
         assert "CREATE TABLE" in proc.stdout or "DROP TABLE" in proc.stdout

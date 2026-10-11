@@ -12,11 +12,26 @@ Duplicate job -> dedupe (return existing plan) — one job per case semantics.
 
 from __future__ import annotations
 
+import os
 import uuid
 from datetime import datetime, timezone
 from typing import Any
 
 MAX_JOB_TRIES = 3
+
+
+def _arq_redis_settings():
+    """Arq has no REDIS_URL env override — read it here so non-default ports
+    (compose maps host 6380) work. Empty/unparseable falls back to localhost."""
+    from arq.connections import RedisSettings
+
+    url = (os.getenv("REDIS_URL", "") or "").strip()
+    if url:
+        try:
+            return RedisSettings.from_dsn(url)
+        except Exception:
+            pass
+    return RedisSettings()
 
 
 def _now_naive() -> datetime:
@@ -71,6 +86,7 @@ async def plan_job(ctx: dict, case_id: str, session_id: str,
         models_mod.ChecklistItem, models_mod.Employee,
         models_mod.OnboardingCase, models_mod.Plan,
     )
+    Action = models_mod.Action
     publish = sse_mod.publish
 
     from .crew import run_plan_crew
@@ -157,8 +173,11 @@ async def plan_job(ctx: dict, case_id: str, session_id: str,
                               case_id=case_id, session_id=session_id)
 
         try:
+            usage: dict = {}
             payload = await run_plan_crew(hire, key_prefix=key_prefix, budget=budget,
-                                          trace_cb=_trace_cb, use_fixtures=_use_fixtures)
+                                          trace_cb=_trace_cb, use_fixtures=_use_fixtures,
+                                          usage=usage)
+            llm_used = bool(usage.get("llm_used", False))
         except BudgetExceeded as exc:
             await _set_status(session, case, "needs_attention", session_id=session_id,
                               event="plan.cap_exceeded")
@@ -199,12 +218,18 @@ async def plan_job(ctx: dict, case_id: str, session_id: str,
             session.add(ChecklistItem(case_id=case_id, title=str(item.get("title", ""))[:300],
                                      due_day=int(item.get("due_day", 1)),
                                      mandatory=bool(item.get("mandatory", False))))
+        # Materialize executor rows (05 reads actions table, not the payload).
+        for i, a in enumerate(payload.get("actions", {}).get("actions", []) or []):
+            session.add(Action(plan_id=plan_row.id, seq=i, type=str(a.get("type", "")),
+                               payload=dict(a.get("payload", {}) or {}), status="pending",
+                               attempts=0, idempotency_key=a.get("idempotency_key")))
         case.current_plan_version = new_version
         await session.flush()
         await write_audit(session, actor="agent:plan_crew", event="plan.created",
                           entity=f"plan:{plan_row.id}",
                           metadata={"version": new_version, "steps": budget.steps,
-                                    "tokens": budget.tokens, "prompt_version": payload.get("prompt_version")},
+                                    "tokens": budget.tokens, "prompt_version": payload.get("prompt_version"),
+                                    "llm_used": llm_used},
                           case_id=case_id, session_id=session_id)
 
         await _set_status(session, case, "awaiting_hr_approval", session_id=session_id,
@@ -217,11 +242,13 @@ async def plan_job(ctx: dict, case_id: str, session_id: str,
         await trace.record("plan_ready",
                            f"plan v{new_version} ready for HR review (case {case_id})")
         return {"case_id": case_id, "plan_id": plan_row.id, "version": new_version,
-                "status": "awaiting_hr_approval", "steps": budget.steps, "tokens": budget.tokens}
+                "status": "awaiting_hr_approval", "steps": budget.steps, "tokens": budget.tokens,
+                "llm_used": llm_used}
 
 
 class WorkerSettings:  # Arq discovers `functions`
     functions = [plan_job]
+    redis_settings = _arq_redis_settings()
 
     @staticmethod
     async def on_startup(ctx: dict) -> None:  # drain-safe defaults

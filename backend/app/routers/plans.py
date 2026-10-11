@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import write_audit
 from ..auth import TokenData, require_roles
 from ..db import get_session
-from ..models import Action, OnboardingCase, Plan
-from ..schemas import PlanIn, PlanOut
-from ._shared import get_case_or_404, plan_out
+from ..models import Action, Plan as PlanRow
+from ..schemas import Plan, PlanIn
+from ._shared import client_ip, get_case_or_404, plan_out
 
 router = APIRouter(prefix="/api/v1/cases", tags=["plans"])
 
@@ -31,17 +31,17 @@ def _diff(old: dict, new: dict, path: str = "") -> list[dict]:
     return changes
 
 
-@router.get("/{case_id}/plan", response_model=PlanOut)
+@router.get("/{case_id}/plan", response_model=Plan)
 async def get_plan(
     case_id: str,
     user: TokenData = Depends(require_roles("hr_admin")),
     session: AsyncSession = Depends(get_session),
-) -> PlanOut:
+) -> Plan:
     case = await get_case_or_404(session, case_id)
     if case.current_plan_version <= 0:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="no plan yet")
     res = await session.execute(
-        select(Plan).where(Plan.case_id == case.id, Plan.version == case.current_plan_version)
+        select(PlanRow).where(PlanRow.case_id == case.id, PlanRow.version == case.current_plan_version)
     )
     plan = res.scalars().first()
     if plan is None:
@@ -49,18 +49,19 @@ async def get_plan(
     return await plan_out(session, plan)
 
 
-@router.put("/{case_id}/plan", response_model=PlanOut)
+@router.put("/{case_id}/plan", response_model=Plan)
 async def update_plan(
     case_id: str,
     payload: PlanIn,
+    request: Request,
     user: TokenData = Depends(require_roles("hr_admin")),
     session: AsyncSession = Depends(get_session),
-) -> PlanOut:
+) -> Plan:
     case = await get_case_or_404(session, case_id)
     prev_payload: dict = {}
     if case.current_plan_version > 0:
         res = await session.execute(
-            select(Plan).where(Plan.case_id == case.id, Plan.version == case.current_plan_version)
+            select(PlanRow).where(PlanRow.case_id == case.id, PlanRow.version == case.current_plan_version)
         )
         prev = res.scalars().first()
         if prev is not None:
@@ -71,16 +72,16 @@ async def update_plan(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="duplicate action idempotency keys")
 
     new_version = case.current_plan_version + 1
-    plan = Plan(case_id=case.id, version=new_version, json_payload=payload.json_payload, created_by="hr_user")
+    plan = PlanRow(case_id=case.id, version=new_version, json_payload=payload.json_payload, created_by="hr_user")
     session.add(plan)
     await session.flush()
-    for a in payload.actions:
-        session.add(Action(plan_id=plan.id, type=a.type, payload=a.payload or {}))
+    for i, a in enumerate(payload.actions):
+        session.add(Action(plan_id=plan.id, seq=i, type=a.type, payload=a.payload or {}))
     diff = _diff(prev_payload, payload.json_payload or {})
     case.current_plan_version = new_version
     await write_audit(
         session, actor=f"{user.role}:{user.sub}", event="plan.updated", entity=f"plan:{plan.id}",
-        metadata={"case_id": case.id, "version": new_version, "diff": diff, "diff_paths": [d["path"] for d in diff]},
+        metadata={"case_id": case.id, "version": new_version, "diff": diff, "diff_paths": [d["path"] for d in diff], "ip": client_ip(request)},
         case_id=case.id, session_id=case.session_id,
     )
     await session.commit()

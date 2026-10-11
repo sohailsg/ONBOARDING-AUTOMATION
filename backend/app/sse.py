@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import asyncio
 from collections import defaultdict
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from datetime import datetime, timezone
+from typing import Any
 
 _subscribers: dict[str, set[asyncio.Queue]] = defaultdict(set)
 
@@ -38,7 +39,7 @@ async def publish(session_id: str, step: str, message: str, case_id: str = "") -
     return event
 
 
-def subscribe_queue(session_id: str) -> tuple[asyncio.Queue, callable]:
+def subscribe_queue(session_id: str) -> tuple[asyncio.Queue[Any], Callable[[], None]]:
     q: asyncio.Queue = asyncio.Queue()
     _subscribers[session_id].add(q)
 

@@ -1,0 +1,60 @@
+# 04 worker: fixture gate (PR) + live-model e2e (nightly). Free-stack only.
+name: worker
+
+on:
+  pull_request:
+    paths:
+      - 'worker/**'
+      - 'backend/app/jobs.py'
+      - 'scripts/worker_eval.py'
+      - '.github/workflows/worker.yml'
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 4 * * *'  # nightly live-model e2e + timing + cost capture (impl §6)
+
+jobs:
+  fixture-gate:
+    # PR: fast, no LLM (impl §6 CI/CD).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install (free-only deps)
+        run: pip install pydantic pydantic-settings sqlalchemy aiosqlite arq redis crewai pytest pytest-asyncio fakeredis
+      - name: Fixture-based worker tests
+        run: python -m pytest worker/tests -q
+        env:
+          WORKER_FIXTURE_MODE: '1'
+          RAG_BASE_URL: http://127.0.0.1:9
+          REDIS_URL: ''
+      - name: Eval harness smoke (3 hires, HR report + ledger)
+        run: python scripts/worker_eval.py --n 3 --out worker-eval.md --ledger worker-ledger.jsonl
+        env:
+          WORKER_FIXTURE_MODE: '1'
+          RAG_BASE_URL: http://127.0.0.1:9
+          REDIS_URL: ''
+
+  live-e2e:
+    # Nightly/staging: live-model timing + cost capture (impl §5/§6).
+    if: github.event_name == 'push' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start Ollama
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          ollama pull llama3.1:8b || true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install (free-only deps)
+        run: pip install pydantic pydantic-settings sqlalchemy aiosqlite arq redis crewai pytest pytest-asyncio fakeredis
+      - name: Live-model e2e (timing + cost ledger, <2 min/plan gate)
+        run: python scripts/worker_eval.py --n 3 --live --out nightly-worker.md --ledger nightly-worker.jsonl
+        env:
+          OLLAMA_HOST: http://localhost:11434
+          OLLAMA_CHAT_MODEL: llama3.1:8b
+          REDIS_URL: ''

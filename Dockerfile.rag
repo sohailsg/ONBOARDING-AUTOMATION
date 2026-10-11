@@ -1,0 +1,30 @@
+# RAG service (03): hybrid retrieve + rerank + cited answers.
+# Build from repo root:  docker build -f Dockerfile.rag .   # from onboarding/
+FROM python:3.11-slim AS base
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /srv/rag
+
+COPY rag-service/requirements.txt /tmp/rag-requirements.txt
+RUN pip install --upgrade pip && pip install -r /tmp/rag-requirements.txt
+
+COPY rag-service /srv/rag
+COPY docker-entrypoint-rag.sh /usr/local/bin/docker-entrypoint-rag.sh
+
+# No-GPU default: deterministic hash embeddings (no Ollama needed).
+# On a GPU box set EMBEDDING_BACKEND=auto + OLLAMA_* for live models.
+ENV CHROMA_DIR=/data/chroma \
+    CHROMA_COLLECTION=policies_v1 \
+    EMBEDDING_BACKEND=hash \
+    OLLAMA_HOST=http://ollama:11434 \
+    OLLAMA_EMBED_MODEL=nomic-embed-text \
+    OLLAMA_CHAT_MODEL=llama3.1:8b \
+    RAG_PORT=8001
+
+VOLUME /data/chroma
+EXPOSE 8001
+
+ENTRYPOINT ["docker-entrypoint-rag.sh"]

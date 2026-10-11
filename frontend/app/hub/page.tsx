@@ -11,8 +11,11 @@ export default function HubPage() {
   const payload = (data?.json_payload ?? {}) as { buddy?: { name?: string; role?: string; timezone?: string; calendar_link?: string } };
 
   return (
-    <main id="main" className="mx-auto max-w-5xl space-y-4 px-4 py-8">
-      <h1 className="text-2xl font-bold">Employee Hub</h1>
+    <main id="main" className="mx-auto max-w-5xl space-y-4 px-4 py-8 motion-safe:animate-rise">
+      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300/80">
+        Orbit
+      </p>
+      <h1 className="title-gradient text-3xl font-bold">Employee Hub</h1>
       <div className="grid gap-4 md:grid-cols-[2fr_1fr]">
         <div className="space-y-4">
           <Timeline />

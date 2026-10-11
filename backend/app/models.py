@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import JSON, Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import JSON, Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint, Uuid
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -15,6 +15,16 @@ def _uuid() -> str:
 
 class Base(DeclarativeBase):
     pass
+
+
+# 01 owns DDL: id/FK columns are Uuid (native UUID on Postgres, CHAR on
+# sqlite) with as_uuid=False so Python-side values stay plain strings.
+def _id_column():
+    return mapped_column(Uuid(as_uuid=False), primary_key=True, default=_uuid)
+
+
+def _fk_column(target: str, nullable: bool = False):
+    return mapped_column(Uuid(as_uuid=False), ForeignKey(target), nullable=nullable)
 
 
 # Status enum values (validated in schemas + transition guards).
@@ -44,21 +54,21 @@ def can_transition(frm: str, to: str) -> bool:
 
 class Employee(Base):
     __tablename__ = "employees"
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    id: Mapped[str] = _id_column()
     name: Mapped[str] = mapped_column(String(200))
     role: Mapped[str] = mapped_column(String(200), default="")
     dept: Mapped[str] = mapped_column(String(200), default="")
     region: Mapped[str] = mapped_column(String(100), default="")
     timezone: Mapped[str] = mapped_column(String(100), default="")
-    manager_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
-    buddy_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    manager_id: Mapped[str | None] = _fk_column("employees.id", nullable=True)
+    buddy_id: Mapped[str | None] = _fk_column("employees.id", nullable=True)
     start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
 
 class OnboardingCase(Base):
     __tablename__ = "onboarding_cases"
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
-    employee_id: Mapped[str] = mapped_column(String(36), ForeignKey("employees.id"))
+    id: Mapped[str] = _id_column()
+    employee_id: Mapped[str] = _fk_column("employees.id")
     status: Mapped[str] = mapped_column(String(40), default="pending_ingestion", index=True)
     current_plan_version: Mapped[int] = mapped_column(Integer, default=0)
     idempotency_key: Mapped[str] = mapped_column(String(128), unique=True)
@@ -69,8 +79,8 @@ class OnboardingCase(Base):
 class Plan(Base):
     __tablename__ = "plans"
     __table_args__ = (UniqueConstraint("case_id", "version", name="uq_plans_case_version"),)
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
-    case_id: Mapped[str] = mapped_column(String(36), ForeignKey("onboarding_cases.id"), index=True)
+    id: Mapped[str] = _id_column()
+    case_id: Mapped[str] = mapped_column(Uuid(as_uuid=False), ForeignKey("onboarding_cases.id"), index=True)
     version: Mapped[int] = mapped_column(Integer)
     json_payload: Mapped[dict] = mapped_column(JSON, default=dict)
     created_by: Mapped[str] = mapped_column(String(20), default="agent")
@@ -79,8 +89,8 @@ class Plan(Base):
 
 class Approval(Base):
     __tablename__ = "approvals"
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
-    plan_id: Mapped[str] = mapped_column(String(36), ForeignKey("plans.id"))
+    id: Mapped[str] = _id_column()
+    plan_id: Mapped[str] = _fk_column("plans.id")
     approver_id: Mapped[str] = mapped_column(String(200))
     decision: Mapped[str] = mapped_column(String(20))
     comment: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -89,20 +99,23 @@ class Approval(Base):
 
 class Action(Base):
     __tablename__ = "actions"
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
-    plan_id: Mapped[str] = mapped_column(String(36), ForeignKey("plans.id"), index=True)
+    id: Mapped[str] = _id_column()
+    plan_id: Mapped[str] = mapped_column(Uuid(as_uuid=False), ForeignKey("plans.id"), index=True)
+    seq: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)
     type: Mapped[str] = mapped_column(String(100))
     payload: Mapped[dict] = mapped_column(JSON, default=dict)
     status: Mapped[str] = mapped_column(String(40), default="pending", index=True)
     attempts: Mapped[int] = mapped_column(Integer, default=0)
     external_ref: Mapped[str | None] = mapped_column(String(300), nullable=True)
     last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # 01 DDL: executor idempotency (UNIQUE). Nullable for pre-0001 rows.
+    idempotency_key: Mapped[str | None] = mapped_column(String(300), nullable=True, unique=True)
 
 
 class ChecklistItem(Base):
     __tablename__ = "checklist_items"
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
-    case_id: Mapped[str] = mapped_column(String(36), ForeignKey("onboarding_cases.id"))
+    id: Mapped[str] = _id_column()
+    case_id: Mapped[str] = _fk_column("onboarding_cases.id")
     title: Mapped[str] = mapped_column(String(300))
     due_day: Mapped[int] = mapped_column(Integer, default=1)
     mandatory: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -111,7 +124,7 @@ class ChecklistItem(Base):
 
 class AuditEvent(Base):
     __tablename__ = "audit_events"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[str] = _id_column()
     actor: Mapped[str] = mapped_column(String(200))
     event: Mapped[str] = mapped_column(String(200))
     entity: Mapped[str] = mapped_column(String(200))
@@ -123,8 +136,8 @@ class AuditEvent(Base):
 
 class ChatLog(Base):
     __tablename__ = "chat_logs"
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
-    employee_id: Mapped[str] = mapped_column(String(36), ForeignKey("employees.id"), index=True)
+    id: Mapped[str] = _id_column()
+    employee_id: Mapped[str] = mapped_column(Uuid(as_uuid=False), ForeignKey("employees.id"), index=True)
     question: Mapped[str] = mapped_column(Text)
     answer: Mapped[str] = mapped_column(Text)
     citations: Mapped[list] = mapped_column(JSON, default=list)

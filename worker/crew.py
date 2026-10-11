@@ -20,8 +20,9 @@ from .schemas import (
     PROMPT_VERSION,
     Entitlement,
     EntitlementSet,
-    FullPlanPayload,
     HireContext,
+    Milestone,
+    MilestoneItem,
     OnboardingPlan,
     SCHEMA_VERSION,
     SystemActionPlan,
@@ -38,6 +39,11 @@ from .tools import (
 )
 
 MAX_REPAIR_RETRIES = 1
+# Crew kickoff budget: generous enough for CPU-only Ollama to finish three
+# sequential agent calls; the 2-min plan DoD is enforced separately on total
+# run latency (PLAN_TIME_BUDGET_S in eval) so slow hardware fails honestly
+# instead of aborting mid-crew.
+CREW_KICKOFF_TIMEOUT_S = 300.0
 
 
 # ------------------------------------------------ deterministic builders
@@ -89,14 +95,15 @@ def build_plan(hire: HireContext, entitlements: EntitlementSet,
         {"title": "Ship first small PR", "due_day": 7, "mandatory": False},
         {"title": "Own first feature end-to-end", "due_day": 30, "mandatory": False},
     ]
+    items = [MilestoneItem.model_validate(i) for i in checklist]
     return OnboardingPlan(
         milestones=[
-            {"phase": "Day1", "items": checklist[:2]},
-            {"phase": "Week1", "items": checklist[2:4]},
-            {"phase": "Month1", "items": checklist[4:]},
+            Milestone(phase="Day1", items=items[:2]),
+            Milestone(phase="Week1", items=items[2:4]),
+            Milestone(phase="Month1", items=items[4:]),
         ],
         meetings=meetings,
-        checklist=checklist,
+        checklist=items,
     )
 
 
@@ -179,16 +186,106 @@ def build_crew(hire: HireContext, llm=None, tool_set=None):
         context=[experience_task],
         output_pydantic=SystemActionPlan,
     )
+    # NOTE: no max_steps kwarg — Crew has no such field (it would be silently
+    # ignored). Step/token caps are enforced by RunBudget (consume_step per
+    # task output), tested in test_run_plan_crew_cap_breach_terminates.
     crew = Crew(agents=[policy_agent, experience_agent, ops_agent],
                 tasks=[policy_task, experience_task, ops_task],
-                process=Process.sequential, verbose=False,
-                max_steps=get_worker_settings().max_steps_per_run)
+                process=Process.sequential, verbose=False)
     return crew
+
+
+async def _crew_payload(hire: HireContext, budget: RunBudget,
+                        trace_cb: Callable[[str, str], Any] | None = None,
+                        key_prefix: str = "",
+                        timeout_s: float = CREW_KICKOFF_TIMEOUT_S,
+                        repair_hint: str = "") -> dict[str, Any]:
+    """Execute the CrewAI Policy -> Experience -> Ops crew (F-AG-1..4).
+
+    Runs ``crew.kickoff()`` (blocking) in a worker thread under a timeout and
+    maps the three ``output_pydantic`` task outputs to the plan payload.
+    Idempotency keys are re-stamped deterministically so the executor
+    contract holds regardless of LLM key formatting.
+
+    Raises BudgetExceeded on timeout/cap breach, RuntimeError on crew/LLM
+    failure or unparseable task outputs. No silent fallback here — the
+    caller (run_plan_crew) decides between strict failure and the
+    deterministic degraded path.
+    """
+    import asyncio
+    import inspect as _inspect
+    import json as _json
+
+    from .llm import get_llm
+
+    async def _emit(step: str, msg: str) -> None:
+        if trace_cb is None:
+            return
+        res = trace_cb(step, msg)
+        if _inspect.isawaitable(res):
+            await res
+
+    llm = get_llm()  # raises RuntimeError if CrewAI/LLM unavailable
+    crew = build_crew(hire, llm=llm)
+    if repair_hint:
+        # F-AG-4 self-repair: tell the crew exactly what was rejected so the
+        # retry corrects the shape instead of repeating the same output.
+        note = ("\nCORRECTION — the previous output was REJECTED for: "
+                + repair_hint[:800]
+                + "\nOutput ONLY the required JSON shape, no other keys, no prose.")
+        for task in crew.tasks:
+            task.description = (task.description or "") + note
+    await _emit("crew_kickoff",
+                f"Running Policy->Experience->Ops crew ({llm_info_safe()})...")
+    try:
+        result = await asyncio.wait_for(asyncio.to_thread(crew.kickoff),
+                                        timeout=timeout_s)
+    except asyncio.TimeoutError as exc:
+        raise BudgetExceeded(f"crew kickoff exceeded {timeout_s:g}s") from exc
+    await _emit("crew_done", "Crew finished; validating structured outputs...")
+
+    tasks_out = list(getattr(result, "tasks_output", None) or [])
+    if len(tasks_out) < 3:
+        raise RuntimeError(f"crew returned {len(tasks_out)} task outputs, need 3")
+    prefix = key_prefix or hire.case_id or "plan"
+    models: list[Any] = []
+    model_classes: tuple[type[EntitlementSet], type[OnboardingPlan], type[SystemActionPlan]] = (
+        EntitlementSet, OnboardingPlan, SystemActionPlan)
+    for idx, (task_out, model_cls) in enumerate(zip(tasks_out[:3], model_classes)):
+        pyd = getattr(task_out, "pydantic", None)
+        raw = getattr(task_out, "raw", "") or ""
+        if pyd is None:
+            data = getattr(task_out, "json_dict", None)
+            if data is None:
+                try:
+                    data = _json.loads(raw)
+                except Exception as exc:
+                    raise RuntimeError(
+                        f"task {idx} output is not structured JSON") from exc
+            pyd = model_cls.model_validate(data)
+        budget.consume_step(RunBudget.estimate_tokens(raw))
+        models.append(pyd)
+    entitlements, plan, actions = models
+    # Re-stamp action keys deterministically (executor contract, 05).
+    for i, action in enumerate(actions.actions):
+        action.idempotency_key = f"{prefix}:{i}"
+    return {"entitlements": entitlements.model_dump(), "plan": plan.model_dump(),
+            "actions": actions.model_dump(),
+            "prompt_version": PROMPT_VERSION, "schema_version": SCHEMA_VERSION}
+
+
+def llm_info_safe() -> str:
+    try:
+        from .llm import llm_info
+
+        info = llm_info()
+        return f"{info.get('provider')}/{info.get('model')}"
+    except Exception:
+        return "llm-unavailable"
 
 
 async def _live_payload(hire: HireContext, budget: RunBudget,
                         trace: Callable[[str, str], Any] | None = None) -> dict[str, Any]:
-    import asyncio
     import inspect
 
     async def _note(step: str, msg: str) -> None:
@@ -214,8 +311,16 @@ async def _live_payload(hire: HireContext, budget: RunBudget,
 async def run_plan_crew(hire: HireContext, key_prefix: str = "",
                         budget: RunBudget | None = None,
                         trace_cb: Callable[[str, str], Any] | None = None,
-                        use_fixtures: bool = False) -> dict[str, Any]:
+                        use_fixtures: bool = False,
+                        strict: bool = False,
+                        usage: dict[str, Any] | None = None) -> dict[str, Any]:
     """Run Policy -> Experience -> Ops with caps + 1 self-repair retry.
+
+    Non-fixture path executes the CrewAI crew (``crew.kickoff()``). If the
+    crew/LLM fails, production falls back to the deterministic assembler so
+    the <2-min schema-valid plan DoD holds without failing the job; pass
+    ``strict=True`` (eval/nightly) to raise instead of degrading. ``usage``
+    (optional dict) is filled with ``llm_used`` + timing/token accounting.
 
     Returns the validated FullPlanPayload dict. Raises ValidationError if the
     repaired output is still invalid; raises BudgetExceeded on cap breach.
@@ -228,6 +333,7 @@ async def run_plan_crew(hire: HireContext, key_prefix: str = "",
     prefix = key_prefix or hire.case_id or "plan"
     attempt_payload: dict[str, Any] | None = None
     last_error: Exception | None = None
+    llm_used = False
 
     for attempt in (0, 1):
         try:
@@ -246,26 +352,49 @@ async def run_plan_crew(hire: HireContext, key_prefix: str = "",
                                 "Building Day1/Week1/Month1 milestones + slots...")
                     await _emit("ops_planner", "Proposing system actions (no side effects)...")
                 attempt_payload = deterministic_payload(hire, prefix, budget)
+                llm_used = False
             else:
                 try:
-                    attempt_payload = await _live_payload(hire, budget, trace_cb)
+                    attempt_payload = await _crew_payload(
+                        hire, budget, trace_cb, key_prefix=prefix,
+                        repair_hint=str(last_error)[:800] if last_error else "")
+                    llm_used = True
                 except BudgetExceeded:
                     raise
-                except Exception:
-                    # Ollama unreachable etc. -> deterministic fallback keeps DoD
-                    # (<2 min schema-valid cited plan) without failing the job.
+                except Exception as exc:
+                    if strict:
+                        raise
+                    # Ollama/crew unreachable etc. -> deterministic fallback keeps
+                    # DoD (<2 min schema-valid cited plan) without failing the job.
+                    if trace_cb is not None:
+                        try:
+                            res = trace_cb("crew_fallback",
+                                           f"Crew unavailable ({type(exc).__name__}); "
+                                           f"degraded deterministic plan")
+                            import inspect as _inspect2
+
+                            if _inspect2.isawaitable(res):
+                                await res
+                        except Exception:
+                            pass
                     attempt_payload = deterministic_payload(hire, prefix, budget)
+                    llm_used = False
             validated = validate_full_plan(attempt_payload)
             latency = time.monotonic() - t0
             log_run_cost(tokens=budget.tokens, latency_s=latency,
                          model=settings.chat_model, case_id=hire.case_id,
                          session_id=hire.session_id)
+            if usage is not None:
+                usage.update({"llm_used": llm_used, "attempts": attempt + 1,
+                              "latency_s": round(latency, 3),
+                              "tokens": budget.tokens, "steps": budget.steps})
             return validated.model_dump()
         except ValidationError as exc:
             last_error = exc
             if attempt >= MAX_REPAIR_RETRIES:
                 raise
-            # Self-repair retry: rebuild deterministically (fresh retrieval +
-            # strict revalidation) before giving up to needs_attention.
+            # F-AG-4 self-repair retry: loop re-runs the crew with the
+            # rejection fed back as a correction hint (fixture mode rebuilds
+            # deterministically) before giving up to needs_attention.
             continue
     raise last_error if last_error else ValidationError.from_exception_data("plan", [])

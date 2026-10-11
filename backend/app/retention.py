@@ -16,10 +16,10 @@ import argparse
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select, text
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .pii import REDACTED, scrub_text
+from .pii import REDACTED
 
 CHAT_RETENTION_MONTHS_DEFAULT = 12
 TRACE_RETENTION_MONTHS_DEFAULT = 6
@@ -83,11 +83,11 @@ async def run_retention(
         row.question = REDACTED
         row.answer = REDACTED
         res.chat_redacted += 1
-    for row in trace_rows:
-        meta = dict(row.metadata_ or {})
+    for ev in trace_rows:
+        meta = dict(ev.metadata_ or {})
         scrubbed = _scrub_metadata(meta)
         if scrubbed != meta:
-            row.metadata_ = scrubbed
+            ev.metadata_ = scrubbed
         res.trace_scrubbed += 1
     await session.commit()
     return res

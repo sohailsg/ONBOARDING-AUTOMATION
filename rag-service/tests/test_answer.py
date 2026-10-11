@@ -1,5 +1,4 @@
 """Unit+integration: citations mandatory, abstain behavior (RTM F-RAG-4)."""
-from conftest import seed_doc
 
 
 def _chunks():
@@ -59,10 +58,50 @@ def test_no_uncited_claims_grep():
 def test_chat_endpoint_abstains_gracefully():
     from fastapi.testclient import TestClient
 
-    import app as app_mod
+    app_mod = _load_app()
 
     client = TestClient(app_mod.app)
     r = client.post("/chat", json={"question": "stats?", "region": "XX", "dept": "all"})
     assert r.status_code == 200
     body = r.json()
     assert body["abstained"] is True and body["citations"] == []
+
+
+def _load_app():
+    """Load rag-service/app.py by path.
+
+    The service module is named `app`, which collides with backend/app
+    (importable as top-level `app` once backend suites run in the same pytest
+    process). importlib keeps this hermetic either way.
+    """
+    import importlib.util
+    import os
+
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    spec = importlib.util.spec_from_file_location(
+        "rag_service_app", os.path.join(here, "app.py")
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_answer_gateway_shape_retrieves_then_answers():
+    """Gateway (02) posts {question, region, dept} with no chunks — the
+    service must retrieve server-side, not 422/abstain (integration RTM)."""
+    from fastapi.testclient import TestClient
+
+    app_mod = _load_app()
+    chunks = [{
+        "text": "Remote home-office budget in the UK is GBP 500 per employee.",
+        "doc": "UK-HB", "page": 2, "effective_date": "2026-04-01",
+        "score": 0.8, "chunk_id": "UK-HB:v1:2:0",
+    }]
+    app_mod.retrieve_fn = lambda *a, **k: chunks
+    client = TestClient(app_mod.app)
+    r = client.post("/answer", json={"question": "UK home-office budget?",
+                                     "region": "UK", "dept": "all"})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert not body["abstained"] and "GBP 500" in body["answer"]
+    assert body["citations"][0]["doc"] == "UK-HB"

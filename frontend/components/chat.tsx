@@ -65,19 +65,19 @@ export function Chat() {
       <h2 className="text-lg font-semibold">Ask about policies</h2>
       <div className="mt-2 max-h-96 space-y-3 overflow-y-auto" aria-live="polite">
         {messages.length === 0 && (
-          <p className="text-sm text-slate-500">
+          <p className="faint text-sm">
             e.g. “What is my remote home-office budget?”
           </p>
         )}
         {messages.map((m, i) =>
           m.role === "user" ? (
-            <div key={i} className="ml-auto max-w-[85%] rounded-lg bg-brand-600 px-3 py-2 text-sm text-white">
+            <div key={i} className="bubble-user">
               {m.text}
             </div>
           ) : (
-            <div key={i} className="max-w-[92%] rounded-lg bg-slate-100 px-3 py-2 text-sm">
+            <div key={i} className="bubble-assistant">
               {m.abstained && (
-                <p className="mb-1 badge bg-amber-100 text-amber-800">couldn&apos;t find — abstained</p>
+                <p className="badge mb-1 border-amber-300/30 bg-amber-400/10 text-amber-200">couldn&apos;t find — abstained</p>
               )}
               <p>{m.text}</p>
               {(m.citations ?? []).length > 0 && (
@@ -85,12 +85,11 @@ export function Chat() {
                   {m.citations!.map((c, k) => (
                     <blockquote
                       key={k}
-                      className="border-l-2 border-brand-600 pl-2 text-xs text-slate-600"
+                      className="bubble-cite"
                     >
                       <a
                         href={`#doc-${encodeURIComponent(c.doc ?? "")}-p${c.page ?? 0}`}
                         id={`doc-${encodeURIComponent(c.doc ?? "")}-p${c.page ?? 0}`}
-                        className="underline hover:text-brand-700"
                         title={`Open ${c.doc} page ${c.page}`}
                       >
                         {c.doc}, p.{c.page}
@@ -121,7 +120,7 @@ export function Chat() {
                 <button
                   aria-label="Helpful"
                   aria-pressed={m.feedback === "up"}
-                  className="rounded px-1 text-xs hover:bg-slate-200"
+                  className="rounded px-1 text-xs hover:bg-white/10"
                   onClick={() => feedback(i, "up")}
                 >
                   👍
@@ -129,7 +128,7 @@ export function Chat() {
                 <button
                   aria-label="Not helpful"
                   aria-pressed={m.feedback === "down"}
-                  className="rounded px-1 text-xs hover:bg-slate-200"
+                  className="rounded px-1 text-xs hover:bg-white/10"
                   onClick={() => feedback(i, "down")}
                 >
                   👎
@@ -138,10 +137,10 @@ export function Chat() {
             </div>
           ),
         )}
-        {pending && <p className="text-xs text-slate-500">Thinking…</p>}
+        {pending && <p className="muted text-xs motion-safe:animate-pulse-soft">Thinking…</p>}
       </div>
       {error && (
-        <p role="alert" className="mt-2 text-sm text-red-700">
+        <p role="alert" className="mt-2 text-sm text-red-300">
           {error}
         </p>
       )}

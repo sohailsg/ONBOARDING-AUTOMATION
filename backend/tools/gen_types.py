@@ -22,6 +22,12 @@ STUB = (
 def _to_ts_type(schema: dict, name: str = "") -> str:
     if "$ref" in schema:
         return schema["$ref"].split("/")[-1]
+    variants = schema.get("anyOf", schema.get("oneOf", None))
+    if variants:
+        non_null = [v for v in variants if v.get("type") != "null"]
+        if len(non_null) == 1:
+            return _to_ts_type(non_null[0], name)
+        return " | ".join(_to_ts_type(v, name) for v in non_null) or "unknown"
     t = schema.get("type", "object")
     if t == "string":
         if schema.get("enum"):
@@ -80,6 +86,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Generate TS types from openapi spec (W2)")
     ap.add_argument("--spec", required=True)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--no-bump-hash", action="store_true",
+                    help="skip updating OPENAPI_HASH in lib/api.ts")
     args = ap.parse_args()
     spec_path = pathlib.Path(args.spec)
     out = pathlib.Path(args.out)
@@ -94,7 +102,32 @@ def main() -> int:
         return 0
     out.write_text(generate(spec))
     print(f"gen_types: wrote {out} ({len(spec.get('paths', {}))} paths)")
+    if not args.no_bump_hash:
+        _bump_hash(out.parent / "api.ts",
+                   str((spec.get("info", {}) or {}).get("version", "")))
     return 0
+
+
+def _bump_hash(api_ts: pathlib.Path, version: str) -> None:
+    """Sync the drift banner's OPENAPI_HASH with the spec version.
+
+    Without this the banner (api-version-banner.tsx) always reports drift:
+    nothing else writes the hash. Tolerates a missing api.ts (warn only).
+    """
+    if not version:
+        print("gen_types: spec has no info.version — hash not bumped")
+        return
+    if not api_ts.exists():
+        print(f"gen_types: {api_ts} not found — hash not bumped")
+        return
+    text = api_ts.read_text()
+    updated, n = re.subn(r'export const OPENAPI_HASH = "[^"]*";',
+                         f'export const OPENAPI_HASH = "{version}";', text, count=1)
+    if not n:
+        print(f"gen_types: OPENAPI_HASH line not found in {api_ts}")
+        return
+    api_ts.write_text(updated)
+    print(f"gen_types: OPENAPI_HASH -> {version}")
 
 
 if __name__ == "__main__":

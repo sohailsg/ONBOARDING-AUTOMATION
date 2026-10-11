@@ -10,9 +10,11 @@ Payload schemas mirror spec 05 §7 + ``n8n/mcp_tools/*.json``.
 
 from __future__ import annotations
 
+from typing import Any
+
 from . import calendar, email, hris, notion, slack, ticket
 
-REGISTRY: dict[str, object] = {
+REGISTRY: dict[str, Any] = {
     email.TOOL_NAME: email,
     slack.TOOL_NAME: slack,
     ticket.TOOL_NAME: ticket,

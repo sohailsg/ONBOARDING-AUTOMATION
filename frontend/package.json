@@ -12,13 +12,14 @@
     "gen-api": "python ../backend/tools/gen_types.py --spec ../backend/openapi.yaml --out lib/api.types.ts"
   },
   "dependencies": {
+    "@tanstack/react-query": "5.51.1",
     "next": "14.2.5",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "@tanstack/react-query": "5.51.1",
     "zustand": "4.5.5"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "1.44.0",
     "@testing-library/jest-dom": "6.4.5",
     "@testing-library/react": "15.0.7",

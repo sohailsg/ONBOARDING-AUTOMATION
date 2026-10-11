@@ -2,20 +2,208 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============ Zero-gravity theme: deep space, glass, glow ============ */
+
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply bg-void text-slate-100 antialiased;
   min-height: 100vh;
+}
+
+/* Starfield + nebula wash. Pure CSS (no requests, no CSP impact). */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(1px 1px at 12% 22%, rgba(255, 255, 255, 0.85), transparent 100%),
+    radial-gradient(1px 1px at 68% 8%, rgba(255, 255, 255, 0.7), transparent 100%),
+    radial-gradient(1.5px 1.5px at 84% 38%, rgba(255, 255, 255, 0.8), transparent 100%),
+    radial-gradient(1px 1px at 33% 64%, rgba(255, 255, 255, 0.6), transparent 100%),
+    radial-gradient(1px 1px at 52% 82%, rgba(255, 255, 255, 0.7), transparent 100%),
+    radial-gradient(1.5px 1.5px at 91% 74%, rgba(255, 255, 255, 0.75), transparent 100%),
+    radial-gradient(1px 1px at 5% 88%, rgba(255, 255, 255, 0.6), transparent 100%),
+    radial-gradient(1px 1px at 44% 12%, rgba(165, 180, 252, 0.9), transparent 100%),
+    radial-gradient(1px 1px at 76% 58%, rgba(165, 180, 252, 0.8), transparent 100%),
+    radial-gradient(620px 420px at 12% -6%, rgba(99, 102, 241, 0.22), transparent 70%),
+    radial-gradient(560px 420px at 88% 12%, rgba(34, 211, 238, 0.13), transparent 70%),
+    radial-gradient(720px 520px at 50% 110%, rgba(167, 139, 250, 0.14), transparent 70%),
+    #04060f;
+}
+
+/* ============ Motion ============
+   Rule: infinite TRANSFORM animations (float, drift) go on decorative
+   elements only — never on buttons, links, inputs, or their containers.
+   Moving boxes never stabilize, which breaks Playwright clicks and keyboard
+   focus predictability. Opacity-only motion (pulse-soft) is safe anywhere;
+   one-shot entrance (rise) settles and is safe. */
+
+/* Floating glass card: the signature surface. */
+.card {
+  @apply rounded-2xl border border-white/10 bg-white/[0.045] p-4 shadow-float backdrop-blur-xl;
+}
+
+.card-hover {
+  transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+}
+.card-hover:hover {
+  transform: translateY(-3px);
+  border-color: rgba(129, 140, 248, 0.35);
+  box-shadow:
+    0 22px 55px -12px rgba(0, 0, 0, 0.75),
+    0 0 28px -8px rgba(99, 102, 241, 0.5);
+}
+
+/* Gradient display text. */
+.title-gradient {
+  @apply bg-gradient-to-r from-indigo-300 via-violet-200 to-cyan-200 bg-clip-text text-transparent;
+}
+
+/* Muted copy on dark (contrast-checked: slate-400 on void ≈ 7:1). */
+.muted {
+  @apply text-slate-400;
+}
+.faint {
+  @apply text-slate-500;
+}
+
+/* ============ Controls ============ */
+
+.btn {
+  @apply inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:opacity-50;
+}
+.btn-primary {
+  @apply btn text-white shadow-glow;
+  background-image: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #06b6d4 130%);
+}
+.btn-primary:hover {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+}
+.btn-ghost {
+  @apply btn border border-white/10 bg-white/[0.05] text-slate-100 hover:border-indigo-300/30 hover:bg-white/[0.09];
+}
+.btn-danger {
+  @apply btn text-white;
+  background-image: linear-gradient(135deg, #dc2626, #991b1b);
+  box-shadow: 0 0 24px -8px rgba(239, 68, 68, 0.6);
+}
+.btn-danger:hover {
+  filter: brightness(1.12);
+}
+
+.input {
+  @apply w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-400/60 focus:outline-none focus:ring-1 focus:ring-indigo-400/60;
+}
+select.input option {
+  background-color: #0a0f24;
+  color: #e2e8f0;
+}
+input[type="checkbox"].input-check {
+  @apply h-4 w-4 accent-cyan-400;
+}
+
+.badge {
+  @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+}
+
+/* Status pills with orbital glow dots. */
+.st {
+  @apply badge border;
+}
+.st::before {
+  content: "";
+  @apply h-1.5 w-1.5 rounded-full bg-current;
+}
+.st-pending_ingestion { @apply border-white/10 bg-white/[0.06] text-slate-300; }
+.st-agent_processing { @apply border-cyan-300/30 bg-cyan-400/10 text-cyan-200 shadow-glow-cyan motion-safe:animate-pulse-soft; }
+.st-awaiting_hr_approval { @apply border-amber-300/30 bg-amber-400/10 text-amber-200; box-shadow: 0 0 22px -8px rgba(251, 191, 36, 0.55); }
+.st-executing { @apply border-violet-300/30 bg-violet-400/10 text-violet-200 shadow-glow motion-safe:animate-pulse-soft; }
+.st-needs_attention { @apply border-red-300/30 bg-red-400/10 text-red-200; box-shadow: 0 0 22px -8px rgba(239, 68, 68, 0.55); }
+.st-active { @apply border-emerald-300/30 bg-emerald-400/10 text-emerald-200; box-shadow: 0 0 22px -8px rgba(52, 211, 153, 0.5); }
+
+/* Chat bubbles. */
+.bubble-user {
+  @apply ml-auto max-w-[85%] rounded-2xl rounded-br-md px-3 py-2 text-sm text-white shadow-glow;
+  background-image: linear-gradient(135deg, #4f46e5, #7c3aed 70%, #0891b2 130%);
+}
+.bubble-assistant {
+  @apply max-w-[92%] rounded-2xl rounded-bl-md border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-slate-100 backdrop-blur-xl;
+}
+.bubble-cite {
+  @apply border-l-2 border-cyan-300/70 pl-2 text-xs text-slate-300;
+}
+.bubble-cite a {
+  @apply text-cyan-200 underline decoration-cyan-200/40 underline-offset-2 hover:text-white;
+}
+
+/* Trace console + code surfaces. */
+.console {
+  @apply rounded-xl border border-white/10 bg-black/45 p-2 font-mono text-xs text-slate-200;
+}
+.console-row {
+  @apply rounded bg-white/[0.04] px-2 py-1;
+}
+.pre-glass {
+  @apply overflow-x-auto rounded-xl border border-white/10 bg-black/40 p-2 text-xs text-slate-200;
+}
+
+/* Diff tones readable on dark. */
+.diff-add { @apply bg-emerald-400/15 text-emerald-200; }
+.diff-del { @apply bg-red-400/15 text-red-200; }
+.diff-ctx { @apply text-slate-400; }
+
+/* Alerts + notices. */
+.alert-error {
+  @apply rounded-xl border border-red-300/25 bg-red-500/10 p-2 text-sm text-red-200;
+}
+.alert-info {
+  @apply rounded-xl border border-white/10 bg-white/[0.05] p-2 text-sm text-slate-200;
+}
+.notice {
+  @apply mt-2 text-sm text-slate-300;
+}
+
+/* Loading shimmer line. */
+.shimmer-line {
+  background: linear-gradient(90deg, rgba(148,163,184,0.08) 25%, rgba(148,163,184,0.28) 50%, rgba(148,163,184,0.08) 75%);
+  background-size: 200% 100%;
+  @apply motion-safe:animate-shimmer rounded text-transparent select-none;
+}
+
+/* Thin glowing scrollbars for consoles. */
+.console::-webkit-scrollbar,
+.pre-glass::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.console::-webkit-scrollbar-thumb,
+.pre-glass::-webkit-scrollbar-thumb {
+  background: rgba(129, 140, 248, 0.35);
+  border-radius: 8px;
+}
+
+/* Visible keyboard focus everywhere (a11y). */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 2px solid #67e8f9;
+  outline-offset: 2px;
 }
 
 .skip-link {
   position: absolute;
   left: -9999px;
   top: 0;
-  background: #1d4ed8;
+  background: #4f46e5;
   color: white;
   padding: 0.5rem 1rem;
   z-index: 50;
@@ -25,27 +213,16 @@ body {
   left: 0;
 }
 
-.card {
-  @apply rounded-xl border border-slate-200 bg-white p-4 shadow-sm;
-}
-
-.btn {
-  @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 disabled:opacity-50;
-}
-.btn-primary {
-  @apply btn bg-brand-600 text-white hover:bg-brand-700;
-}
-.btn-ghost {
-  @apply btn border border-slate-300 bg-white hover:bg-slate-100;
-}
-.btn-danger {
-  @apply btn bg-red-600 text-white hover:bg-red-700;
-}
-
-.input {
-  @apply w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none focus:ring-1 focus:ring-brand-600;
-}
-
-.badge {
-  @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+/* Respect reduced motion: static cosmos, instant content. */
+@media (prefers-reduced-motion: reduce) {
+  body::before {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

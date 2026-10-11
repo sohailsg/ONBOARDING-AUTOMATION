@@ -5,6 +5,7 @@ Worker dedupes by idempotency key; DB state is truth (at-least-once enqueue).
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 ENQUEUED: list[dict[str, Any]] = []
@@ -16,12 +17,25 @@ DLQ: list[dict[str, Any]] = []
 MAX_ATTEMPTS = 3
 
 
+def _arq_redis_settings():
+    """Arq CLI has no REDIS_URL override — read it here (mirrors worker/jobs)."""
+    from arq.connections import RedisSettings
+
+    url = (os.getenv("REDIS_URL", "") or "").strip()
+    if url:
+        try:
+            return RedisSettings.from_dsn(url)
+        except Exception:
+            pass
+    return RedisSettings()
+
+
 async def enqueue(job_name: str, *args: Any, **kwargs: Any) -> str:
     """Enqueue via Arq; fall back to inline record when Redis is unavailable.
 
     Returns a job id (arq job id or 'inline-<n>'). Test code inspects ENQUEUED.
     """
-    record = {"job": job_name, "args": args, "kwargs": kwargs}
+    record: dict[str, Any] = {"job": job_name, "args": args, "kwargs": kwargs}
     try:
         from .config import get_settings
 
@@ -90,11 +104,27 @@ def clear_dlq() -> None:
 
 
 # --- Arq worker entrypoints (04/05 implement bodies; gateway provides stubs) ---
-async def plan_job(ctx: dict, case_id: str, session_id: str) -> dict:  # pragma: no cover - worker-owned
+async def plan_job(ctx: dict, case_id: str, session_id: str) -> dict:
+    """Arq entrypoint: delegate to the worker crew (04); stub fallback if unavailable."""
+    impl = _worker_plan_job()
+    if impl is not None:
+        return await impl(ctx, case_id, session_id)
     from .sse import publish
 
     await publish(session_id, "plan_queued", f"plan job queued for case {case_id}", case_id)
     return {"case_id": case_id, "session_id": session_id}
+
+
+def _worker_plan_job():
+    """Resolve worker.jobs.plan_job under either package root; None if unavailable."""
+    try:
+        from onboarding.worker.jobs import plan_job as _impl
+    except ImportError:
+        try:
+            from worker.jobs import plan_job as _impl
+        except ImportError:
+            return None
+    return _impl
 
 
 async def execute_job(ctx: dict, plan_id: str) -> dict:
@@ -113,3 +143,5 @@ async def ingest_job(ctx: dict) -> dict:  # pragma: no cover - rag-owned
 
 class WorkerSettings:
     functions = [plan_job, execute_job, ingest_job]
+    # Same env-driven Redis as the worker package: compose maps host 6380.
+    redis_settings = _arq_redis_settings()

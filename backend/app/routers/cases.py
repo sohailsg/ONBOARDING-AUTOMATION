@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..auth import TokenData, require_roles
 from ..db import get_session
 from ..models import AuditEvent, OnboardingCase
-from ..schemas import CasePage
+from ..schemas import CasePage, CaseStatus
 from ..sse import redis_listener, subscribe_queue
 from ._shared import case_out, get_case_or_404
 
@@ -25,7 +25,7 @@ HEARTBEAT_SECONDS = 15
 
 @router.get("", response_model=CasePage)
 async def list_cases(
-    status: str | None = Query(default=None),
+    status: CaseStatus | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
     user: TokenData = Depends(require_roles("hr_admin")),

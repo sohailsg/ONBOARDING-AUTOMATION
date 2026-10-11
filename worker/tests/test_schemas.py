@@ -106,5 +106,5 @@ def test_full_payload_roundtrip_preserves_prompt_version():
     payload = {"entitlements": _good_entitlements(), "plan": _good_plan(),
                "actions": _good_actions()}
     parsed = validate_full_plan(payload)
-    assert parsed.prompt_version == "v1"
+    assert parsed.prompt_version == "v4"
     assert FullPlanPayload.model_validate(parsed.model_dump()).schema_version == "v1"

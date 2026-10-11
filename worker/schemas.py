@@ -17,7 +17,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-PROMPT_VERSION = "v1"
+PROMPT_VERSION = "v4"
 SCHEMA_VERSION = "v1"
 
 Phase = Literal["Day 1", "Day1", "Week 1", "Week1", "Month 1", "Month1"]
@@ -28,7 +28,9 @@ ACTION_TYPES = (
     "create_notion_page",
     "create_invite",
     "create_ticket",
-    "send_slack",
+    # Canonical executor word is post_slack (spec 05 §7 + n8n tool def);
+    # send_slack is accepted once and normalized below (LLM alias).
+    "post_slack",
 )
 
 # Statuses plan_job is allowed to start from (re-runs / dedupe safe).
@@ -52,6 +54,23 @@ class Entitlement(BaseModel):
     kind: str = Field(min_length=1)
     detail: str = Field(min_length=1)
     citation: Citation
+
+    @field_validator("kind", mode="before")
+    @classmethod
+    def _kind_normalize(cls, v: object) -> object:
+        # LLMs emit "Leave", "Equipment Budget", "Training" — normalize to
+        # the canonical enum before the allowlist check below.
+        if not isinstance(v, str):
+            return v
+        norm = v.strip().lower().replace("-", " ").replace("_", " ")
+        norm = " ".join(norm.split())
+        aliases = {"training": "mandatory_training",
+                   "mandatory training": "mandatory_training",
+                   "equipment budget": "equipment_budget",
+                   "equipment": "equipment_budget",
+                   "time off": "leave", "pto": "leave"}
+        norm = aliases.get(norm, norm).replace(" ", "_")
+        return norm
 
     @field_validator("kind")
     @classmethod
@@ -113,9 +132,14 @@ class Action(BaseModel):
     @field_validator("type")
     @classmethod
     def _type_allowed(cls, v: str) -> str:
-        if v not in ACTION_TYPES:
+        norm = str(v or "").strip().lower().replace(" ", "_").replace("-", "_")
+        aliases = {"send_slack": "post_slack", "slack": "post_slack",
+                   "email": "send_email", "ticket": "create_ticket",
+                   "invite": "create_invite", "notion": "create_notion_page"}
+        norm = aliases.get(norm, norm)
+        if norm not in ACTION_TYPES:
             raise ValueError(f"action.type must be one of {ACTION_TYPES}")
-        return v
+        return norm
 
     @model_validator(mode="after")
     def _payload_by_type(self) -> Action:
@@ -124,7 +148,7 @@ class Action(BaseModel):
             "create_notion_page": ("owner", "template"),
             "create_invite": ("attendees", "start", "end"),
             "create_ticket": ("title", "queue", "body"),
-            "send_slack": ("channel", "text"),
+            "post_slack": ("channel", "text"),
         }
         need = required.get(self.type, ())
         missing = [k for k in need if k not in self.payload]

@@ -27,7 +27,17 @@ npm run dev                       # real API at NEXT_PUBLIC_API_URL
 ## Tests
 
 - `npm test` — Vitest unit (progress, diff, citations, rollback)
-- `npm run test:e2e` — Playwright vs staging (HR + employee flows)
+- `npm run test:e2e` — Playwright vs MSW mocks (HR + employee flows; system Chrome via `playwright.config.ts`)
+- Lighthouse (prod build, system Chrome): `/login` perf 0.99 / a11y 100 / LCP 2.0s;
+  `/hub` 1.0 / 100 / 1.8s; `/admin` 1.0 / 100 / 1.5s — all within LCP < 2.5s budget.
+  (Best-practices 0.96 is console noise from the unreachable API in no-backend envs.)
+
+## CI & drift
+
+- `.github/workflows/frontend.yml` — `npm run gen-api` + drift check (fails build on
+  `lib/api.types.ts` staleness), `tsc`, Vitest, `next build`, e2e.
+- `ApiVersionBanner` — compares `OPENAPI_HASH` against live `/openapi.json`
+  `info.version`; shows a redeploy banner on drift, stays silent when undiscoverable.
 
 ## A11y / perf budgets
 

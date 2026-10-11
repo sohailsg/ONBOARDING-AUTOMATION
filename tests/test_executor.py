@@ -15,7 +15,6 @@ from sqlalchemy.pool import StaticPool
 from backend.app import models as m
 from backend.executor import (
     HALT_REQUESTED,
-    clear_halt,
     is_halt_requested,
     request_halt,
 )
@@ -291,6 +290,207 @@ async def test_halt_mid_run_stops_remainder():
         assert (await s.get(m.OnboardingCase, case_id)).status == "needs_attention"
 
 
+# --- DDL follow-ups: seq ordering + widened status CHECK (migration 0002) ---
+
+
+def test_ddl_statuses_include_executor_words():
+    from sqlalchemy import CheckConstraint
+
+    from db.models import ACTION_STATUSES, Action
+
+    assert "succeeded" in ACTION_STATUSES and "halted" in ACTION_STATUSES
+    assert "done" in ACTION_STATUSES and "skipped" in ACTION_STATUSES  # legacy retained
+    checks = [c for c in Action.__table__.constraints if isinstance(c, CheckConstraint)]
+    sql = " ".join(str(c.sqltext) for c in checks)
+    for word in ("pending", "running", "succeeded", "done", "failed", "halted", "skipped"):
+        assert f"'{word}'" in sql
+
+
+def test_ddl_action_has_seq_column():
+    from db.models import Action as DdlAction
+
+    assert "seq" in DdlAction.__table__.columns
+
+
+def test_seed_rows_assign_seq():
+    from db.seeds.seed_demo import _seed_rows
+
+    _, _, _, actions, _, _ = _seed_rows()
+    by_plan: dict = {}
+    for a in actions:
+        by_plan.setdefault(a["plan_id"], []).append(a["seq"])
+    assert by_plan and all(seqs == list(range(len(seqs))) for seqs in by_plan.values())
+
+
+async def test_runner_executes_in_seq_order_not_insert_order():
+    engine, factory = _mem_factory()
+    await _init(engine)
+    _, plan_id = await _seed(factory, [
+        ("post_slack", {"channel": "#c", "text": "first", "tag": "A"}),
+        ("post_slack", {"channel": "#c", "text": "second", "tag": "B"}),
+        ("post_slack", {"channel": "#c", "text": "third", "tag": "C"}),
+    ])
+    async with factory() as s:
+        rows = (await s.execute(select(m.Action).where(m.Action.plan_id == plan_id))).scalars().all()
+        tags = {"A": 2, "B": 0, "C": 1}
+        for row in rows:
+            row.seq = tags[row.payload["tag"]]
+        await s.commit()
+    seen: list[str] = []
+
+    async def recording(*, action_type, key, payload):
+        seen.append(payload["tag"])
+        return f"{action_type}:{key}"
+
+    summary = await execute_plan(plan_id, session_factory=factory, tool_caller=recording, sleep=_nosleep)
+    assert summary["succeeded"] == 3
+    assert seen == ["B", "C", "A"]  # seq order, not insertion order
+
+
+def test_put_plan_assigns_seq(tmp_path, monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from backend.app.config import get_settings as _get_settings
+    from backend.app.db import get_session
+    from backend.app.main import create_app
+
+    # Hermetic creds: this test hardcodes the dev service key / stub tokens,
+    # so pin the settings it depends on regardless of ambient env or which
+    # other test modules share this pytest process.
+    monkeypatch.setenv("SERVICE_API_KEY", "dev-service-key")
+    monkeypatch.setenv("JWT_DEV_STUB", "true")
+    _get_settings.cache_clear()
+
+    db_path = tmp_path / "putseq.db"
+    engine = create_async_engine(f"sqlite+aiosqlite:///{db_path}")
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+
+    async def setup():
+        async with engine.begin() as conn:
+            await conn.run_sync(m.Base.metadata.create_all)
+        async with factory() as s:
+            emp = m.Employee(name="Seq", role="R", dept="D", region="UK")
+            s.add(emp)
+            await s.flush()
+            case = m.OnboardingCase(
+                employee_id=emp.id, status="agent_processing", current_plan_version=0,
+                idempotency_key=f"putseq:{uuid.uuid4()}",
+            )
+            s.add(case)
+            await s.commit()
+            return case.id
+
+    case_id = __import__("asyncio").run(setup())
+    app = create_app()
+
+    async def override():
+        async with factory() as s:
+            yield s
+
+    app.dependency_overrides[get_session] = override
+    client = TestClient(app)
+    resp = client.put(
+        f"/api/v1/cases/{case_id}/plan",
+        json={"json_payload": {}, "actions": [
+            {"type": "send_email", "payload": {"to": "a@x.com", "subject": "s", "body": "b"}},
+            {"type": "post_slack", "payload": {"channel": "#c", "text": "t"}},
+        ]},
+        headers={"Authorization": "dev:hr_admin:alice"},
+    )
+    assert resp.status_code == 200, resp.text
+    assert [a["seq"] for a in resp.json()["actions"]] == [0, 1]
+
+
+def test_sandbox_e2e_hire_to_active(tmp_path, monkeypatch):
+    """5.6 sandbox end-to-end through the real HTTP surface.
+
+    trigger (service) -> worker stand-in flips status -> PUT plan (hr_admin)
+    -> approve (hr_admin) -> execute_plan -> active with external_refs.
+    """
+    import asyncio
+
+    from fastapi.testclient import TestClient
+
+    from backend.app.config import get_settings as _get_settings
+    from backend.app.db import get_session
+    from backend.app.main import create_app
+
+    # Hermetic creds (see test_put_plan_assigns_seq): hardcoded dev key/stub.
+    monkeypatch.setenv("SERVICE_API_KEY", "dev-service-key")
+    monkeypatch.setenv("JWT_DEV_STUB", "true")
+    _get_settings.cache_clear()
+
+    db_path = tmp_path / "e2e.db"
+    engine = create_async_engine(
+        f"sqlite+aiosqlite:///{db_path}", connect_args={"check_same_thread": False}
+    )
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+
+    async def setup():
+        async with engine.begin() as conn:
+            await conn.run_sync(m.Base.metadata.create_all)
+
+    asyncio.run(setup())
+    app = create_app()
+
+    async def override():
+        async with factory() as s:
+            yield s
+
+    app.dependency_overrides[get_session] = override
+    client = TestClient(app)
+    hr = {"Authorization": "dev:hr_admin:alice"}
+
+    trig = client.post(
+        "/api/v1/onboarding/trigger",
+        json={"name": "E2E Hire", "role": "BE", "dept": "Eng", "region": "UK",
+              "start_date": "2026-11-01"},
+        headers={"X-Service-Key": "dev-service-key", "Idempotency-Key": f"e2e:{uuid.uuid4()}"},
+    )
+    assert trig.status_code == 201, trig.text
+    case_id = trig.json()["id"]
+
+    async def worker_stand_in():
+        async with factory() as s:
+            case = await s.get(m.OnboardingCase, case_id)
+            case.status = "awaiting_hr_approval"  # 04 worker would do this
+            await s.commit()
+
+    asyncio.run(worker_stand_in())
+
+    put = client.put(
+        f"/api/v1/cases/{case_id}/plan",
+        json={"json_payload": {}, "actions": [
+            {"type": "send_email", "payload": {"to": "e2e@x.com", "subject": "hi", "body": "welcome"}},
+            {"type": "create_ticket", "payload": {"queue": "IT", "title": "laptop", "body": "mbp"}},
+        ]},
+        headers=hr,
+    )
+    assert put.status_code == 200, put.text
+    plan_id = put.json()["id"]
+
+    appr = client.post(f"/api/v1/approvals/{plan_id}", json={"decision": "approve"}, headers=hr)
+    assert appr.status_code == 200, appr.text
+
+    summary = asyncio.run(execute_plan(plan_id, session_factory=factory, sleep=_nosleep))
+    assert summary["succeeded"] == 2 and summary["failed"] == 0
+
+    async def verify():
+        async with factory() as s:
+            case = await s.get(m.OnboardingCase, case_id)
+            assert case.status == "active"
+            rows = (await s.execute(select(m.Action).where(m.Action.plan_id == plan_id))).scalars().all()
+            assert [a.status for a in rows] == ["succeeded", "succeeded"]
+            assert all(a.external_ref for a in rows)  # DoD: external_ref per action
+            assert [a.seq for a in rows] == [0, 1]
+            events = (await s.execute(
+                select(m.AuditEvent).where(m.AuditEvent.case_id == case_id))).scalars().all()
+            names = [e.event for e in events]
+            assert names.count("action.succeeded") == 2 and "execution.completed" in names
+
+    asyncio.run(verify())
+
+
 # --- halt API: contract + audit (F-MCP-4) ---
 
 
@@ -304,7 +504,6 @@ def test_halt_endpoint_contract(tmp_path):
     engine = create_async_engine(f"sqlite+aiosqlite:///{db_path}")
     factory = async_sessionmaker(engine, expire_on_commit=False)
 
-    import asyncio
 
     async def setup():
         async with engine.begin() as conn:

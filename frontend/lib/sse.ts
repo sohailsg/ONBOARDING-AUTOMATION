@@ -35,7 +35,8 @@ export function useTraceStream(caseId: string | null) {
           const data = JSON.parse(ev.data) as TraceEvent;
           pushTrace(data);
         } catch {
-          pushTrace({ message: ev.data, ts: new Date().toISOString() });
+          // Unparseable frame (e.g. heartbeat comment): keep TraceEvent shape.
+          pushTrace({ ts: new Date().toISOString(), step: "unparsed", message: ev.data, case_id: caseId ?? "", session_id: "" });
         }
       };
       es.onerror = () => {

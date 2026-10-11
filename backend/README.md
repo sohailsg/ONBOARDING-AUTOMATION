@@ -16,6 +16,7 @@ app/
   jobs.py            # Arq enqueue w/ inline fallback; DLQ helpers (07); worker entrypoints
   sse.py             # trace:{session_id} in-memory bus + redis pub/sub bridge
   ratelimit.py       # slowapi limiter (chat 30/min, trigger 60/min, reindex 2/hr)
+  errors.py          # spec §7 error map: 400 Pydantic details, 5xx JSON + Sentry
   metrics.py         # RED latency series + Prometheus render (07)
   routers/
     onboarding.py    # POST /api/v1/onboarding/trigger (service, Idempotency-Key)
@@ -27,10 +28,11 @@ app/
     admin.py         # POST /admin/reindex + audit/readiness/DLQ (07)
     execute.py       # POST /execute/{case_id}/halt (05 kill switch)
 tools/gen_types.py   # OpenAPI -> TS codegen for frontend (`make gen-api`)
-tests/test_gateway.py# 18 tests: RBAC matrix, idempotency, SSE reconnect (live server),
-                     # plan/approval, row scoping, chat abstain, OpenAPI surface
+tests/test_gateway.py# 20 tests: RBAC matrix, idempotency, SSE reconnect (live server),
+                     # plan/approval, row scoping, chat abstain, OpenAPI surface,
+                     # 400 validation map, audit IP/job-id metadata
 requirements.txt
-openapi.yaml         # §7 contract (frontend codegen input)
+openapi.yaml         # §7 contract, regenerated from the live app (see below)
 ```
 
 ## Run / test
@@ -38,9 +40,19 @@ openapi.yaml         # §7 contract (frontend codegen input)
 ```bash
 uvicorn onboarding.backend.app.main:app --port 8000
 python -m pytest onboarding/backend/tests -q   # sqlite memory/file, no external services
-python onboarding/backend/tools/gen_types.py --spec onboarding/backend/openapi.yaml \
-  --out onboarding/frontend/lib/api.types.ts
+python onboarding/backend/tools/perf_smoke.py --n 30   # DoD p95 <300ms check
 ```
+
+## Contract regen (after any route change)
+
+```bash
+python onboarding/backend/tools/export_openapi.py   # live app -> backend/openapi.yaml
+python onboarding/backend/tools/gen_types.py --spec onboarding/backend/openapi.yaml \
+  --out onboarding/frontend/lib/api.types.ts        # = `make gen-api`
+```
+
+Schema names match the §7 contract (`Case`, `Plan`, `Approval`, `ChecklistItem`,
+`CaseStatus`, `TraceEvent`) so generated types drop straight into 06's client.
 
 SSE notes: `GET /cases/{id}/stream` replays last-N `audit_events` for the case
 session (`?last_n=`, `?last_event_id=`) then fans out live `trace:{session_id}`

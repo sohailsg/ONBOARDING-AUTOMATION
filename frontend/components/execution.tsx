@@ -46,18 +46,18 @@ export function ExecutionView({ caseId }: { caseId: string }) {
         </button>
       </div>
       {halted && (
-        <p role="alert" className="mt-2 rounded bg-red-50 p-2 text-sm text-red-800">
+        <p role="alert" className="alert-error mt-2">
           Execution halted by operator. Remaining queued actions were cancelled.
         </p>
       )}
       <ul className="mt-3 space-y-2">
         {actions.map((a) => (
-          <li key={a.id} className="flex items-center justify-between rounded border border-slate-200 p-2 text-sm">
+          <li key={a.id} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] p-2 text-sm">
             <div>
               <p className="font-medium">{a.type}</p>
-              <p className="text-xs text-slate-500">
+              <p className="faint text-xs">
                 {a.status ?? "queued"} · attempts {(a.attempts ?? 0) + (retries[a.id] ?? 0)}
-                {a.error && <span className="text-red-700"> · {a.error}</span>}
+                {a.error && <span className="text-red-300"> · {a.error}</span>}
               </p>
             </div>
             <button
@@ -70,7 +70,7 @@ export function ExecutionView({ caseId }: { caseId: string }) {
           </li>
         ))}
         {actions.length === 0 && (
-          <li className="text-sm text-slate-500">
+          <li className="faint text-sm">
             No actions yet — approve the plan to enqueue execution.
           </li>
         )}

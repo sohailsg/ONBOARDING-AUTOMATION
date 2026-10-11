@@ -12,7 +12,7 @@ test("HR flow: pipeline → plan → approve → trace → halt", async ({ page 
   await page.getByLabel(/filter by status/i).selectOption("awaiting_hr_approval");
   await expect(page.getByRole("table")).toBeVisible();
 
-  const firstCase = page.getByRole("link").first();
+  const firstCase = page.getByRole("link", { name: /…/ });
   if (await firstCase.count()) {
     await firstCase.click();
     await page.getByRole("tab", { name: /plan/i }).click();

@@ -1,5 +1,5 @@
 # RAG service deps — free/local only. Heavy ML (torch/sentence-transformers)
-//# is OPTIONAL (lexical rerank fallback is used when absent).
+# Heavy ML (torch/sentence-transformers) is OPTIONAL (lexical rerank fallback).
 fastapi>=0.110
 uvicorn>=0.29
 pydantic>=2.5

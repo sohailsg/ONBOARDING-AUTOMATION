@@ -1,289 +1,1342 @@
-openapi: 3.1.0
+# AUTO-GENERATED from the live gateway (W2) — do not hand-edit.
+# Regenerate: python onboarding/backend/tools/export_openapi.py
+components:
+  schemas:
+    ActionPayload:
+      properties:
+        idempotency_key:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Idempotency Key
+        payload:
+          additionalProperties: true
+          title: Payload
+          type: object
+        type:
+          minLength: 1
+          title: Type
+          type: string
+      required:
+      - type
+      title: ActionPayload
+      type: object
+    Approval:
+      properties:
+        approver_id:
+          title: Approver Id
+          type: string
+        decided_at:
+          format: date-time
+          title: Decided At
+          type: string
+        decision:
+          title: Decision
+          type: string
+        id:
+          title: Id
+          type: string
+        plan_id:
+          title: Plan Id
+          type: string
+      required:
+      - id
+      - plan_id
+      - approver_id
+      - decision
+      - decided_at
+      title: Approval
+      type: object
+    ApprovalDecision:
+      properties:
+        comment:
+          default: ''
+          title: Comment
+          type: string
+        decision:
+          enum:
+          - approve
+          - reject
+          title: Decision
+          type: string
+      required:
+      - decision
+      title: ApprovalDecision
+      type: object
+    Case:
+      properties:
+        current_plan_version:
+          title: Current Plan Version
+          type: integer
+        employee_id:
+          title: Employee Id
+          type: string
+        id:
+          title: Id
+          type: string
+        idempotency_key:
+          title: Idempotency Key
+          type: string
+        session_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Id
+        status:
+          $ref: '#/components/schemas/CaseStatus'
+      required:
+      - id
+      - employee_id
+      - status
+      - current_plan_version
+      - idempotency_key
+      title: Case
+      type: object
+    CasePage:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/Case'
+          title: Items
+          type: array
+        page:
+          title: Page
+          type: integer
+        page_size:
+          title: Page Size
+          type: integer
+        total:
+          title: Total
+          type: integer
+      required:
+      - items
+      - page
+      - page_size
+      - total
+      title: CasePage
+      type: object
+    CaseStatus:
+      enum:
+      - pending_ingestion
+      - agent_processing
+      - awaiting_hr_approval
+      - executing
+      - needs_attention
+      - active
+      title: CaseStatus
+      type: string
+    ChatRequest:
+      properties:
+        question:
+          maxLength: 2000
+          minLength: 1
+          title: Question
+          type: string
+      required:
+      - question
+      title: ChatRequest
+      type: object
+    ChatResponse:
+      properties:
+        answer:
+          title: Answer
+          type: string
+        citations:
+          items:
+            $ref: '#/components/schemas/Citation'
+          title: Citations
+          type: array
+        confidence:
+          title: Confidence
+          type: number
+      required:
+      - answer
+      - citations
+      - confidence
+      title: ChatResponse
+      type: object
+    ChecklistItem:
+      properties:
+        completed_at:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: Completed At
+        due_day:
+          title: Due Day
+          type: integer
+        id:
+          title: Id
+          type: string
+        mandatory:
+          title: Mandatory
+          type: boolean
+        title:
+          title: Title
+          type: string
+      required:
+      - id
+      - title
+      - due_day
+      - mandatory
+      - completed_at
+      title: ChecklistItem
+      type: object
+    ChecklistPatch:
+      properties:
+        completed:
+          title: Completed
+          type: boolean
+      required:
+      - completed
+      title: ChecklistPatch
+      type: object
+    Citation:
+      properties:
+        doc:
+          title: Doc
+          type: string
+        effective_date:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Effective Date
+        page:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Page
+      required:
+      - doc
+      title: Citation
+      type: object
+    DevLoginIn:
+      properties:
+        employee_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Employee Id
+        role:
+          enum:
+          - employee
+          - hr_admin
+          title: Role
+          type: string
+      required:
+      - role
+      title: DevLoginIn
+      type: object
+    DevLoginOut:
+      properties:
+        role:
+          title: Role
+          type: string
+        sub:
+          title: Sub
+          type: string
+        token:
+          title: Token
+          type: string
+      required:
+      - token
+      - role
+      - sub
+      title: DevLoginOut
+      type: object
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          title: Detail
+          type: array
+      title: HTTPValidationError
+      type: object
+    HireRecord:
+      properties:
+        buddy_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Buddy Id
+        dept:
+          default: ''
+          title: Dept
+          type: string
+        manager_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Manager Id
+        name:
+          minLength: 1
+          title: Name
+          type: string
+        region:
+          default: ''
+          title: Region
+          type: string
+        role:
+          default: ''
+          title: Role
+          type: string
+        start_date:
+          minLength: 1
+          title: Start Date
+          type: string
+        timezone:
+          default: ''
+          title: Timezone
+          type: string
+      required:
+      - name
+      - start_date
+      title: HireRecord
+      type: object
+    Plan:
+      properties:
+        actions:
+          items:
+            additionalProperties: true
+            type: object
+          title: Actions
+          type: array
+        case_id:
+          title: Case Id
+          type: string
+        created_by:
+          title: Created By
+          type: string
+        id:
+          title: Id
+          type: string
+        json_payload:
+          additionalProperties: true
+          title: Json Payload
+          type: object
+        version:
+          title: Version
+          type: integer
+      required:
+      - id
+      - case_id
+      - version
+      - json_payload
+      - created_by
+      title: Plan
+      type: object
+    PlanIn:
+      properties:
+        actions:
+          items:
+            $ref: '#/components/schemas/ActionPayload'
+          title: Actions
+          type: array
+        json_payload:
+          additionalProperties: true
+          title: Json Payload
+          type: object
+      title: PlanIn
+      type: object
+    TraceEvent:
+      properties:
+        case_id:
+          title: Case Id
+          type: string
+        id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Id
+        message:
+          title: Message
+          type: string
+        session_id:
+          title: Session Id
+          type: string
+        step:
+          title: Step
+          type: string
+        ts:
+          format: date-time
+          title: Ts
+          type: string
+      required:
+      - ts
+      - step
+      - message
+      - case_id
+      - session_id
+      title: TraceEvent
+      type: object
+    ValidationError:
+      properties:
+        ctx:
+          title: Context
+          type: object
+        input:
+          title: Input
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          title: Location
+          type: array
+        msg:
+          title: Message
+          type: string
+        type:
+          title: Error Type
+          type: string
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+      type: object
 info:
   title: Onboarding Gateway API
-  version: 0.0.0-w0-stub
-  description: >
-    W0 contract stub. Implements plan §7 surface. Full schemas + examples
-    land in W2 (02-impl). Frontend codegen consumes this file (see Makefile gen-api).
-servers:
-  - url: http://localhost:8000
+  version: 0.2.0-w2
+openapi: 3.1.0
 paths:
-  /api/v1/onboarding/trigger:
-    post:
-      operationId: triggerOnboarding
+  /api/v1/admin/audit/completeness/{case_id}:
+    get:
+      description: 7.3 per-action completeness check for one hire trail.
+      operationId: audit_completeness_api_v1_admin_audit_completeness__case_id__get
       parameters:
-        - $ref: '#/components/parameters/IdempotencyKey'
-      requestBody:
+      - in: path
+        name: case_id
         required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/HireRecord'
-      responses:
-        '201':
-          description: Case created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Case'
-        '200':
-          description: Duplicate idempotency key — existing case
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Case'
-  /api/v1/cases:
-    get:
-      operationId: listCases
-      parameters:
-        - name: status
-          in: query
-          schema:
-            $ref: '#/components/schemas/CaseStatus'
+        schema:
+          title: Case Id
+          type: string
+      - in: header
+        name: authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-Service-Key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Service-Key
       responses:
         '200':
-          description: Pipeline page
           content:
             application/json:
               schema:
+                additionalProperties: true
+                title: Response Audit Completeness Api V1 Admin Audit Completeness  Case
+                  Id  Get
                 type: object
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Case'
-  /api/v1/cases/{id}/stream:
-    get:
-      operationId: streamTrace
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: text/event-stream of TraceEvent
-          content:
-            text/event-stream:
-              schema:
-                $ref: '#/components/schemas/TraceEvent'
-  /api/v1/cases/{id}/plan:
-    get:
-      operationId: getPlan
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Current plan version
+          description: Successful Response
+        '422':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Plan'
-    put:
-      operationId: updatePlan
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Audit Completeness
+      tags:
+      - admin
+  /api/v1/admin/audit/export:
+    get:
+      description: 7.3 read-only auditor export (CSV, PII-redacted).
+      operationId: audit_export_api_v1_admin_audit_export_get
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - in: query
+        name: case_id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Case Id
+      - in: query
+        name: limit
+        required: false
+        schema:
+          default: 5000
+          maximum: 20000
+          minimum: 1
+          title: Limit
+          type: integer
+      - in: header
+        name: authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-Service-Key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Service-Key
       responses:
         '200':
-          description: New plan version created
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Successful Response
+        '422':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Plan'
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Audit Export
+      tags:
+      - admin
+  /api/v1/admin/dlq:
+    get:
+      description: 7.5 DLQ depth + entries (drain <4h SLO tracked in pilot report).
+      operationId: dlq_list_api_v1_admin_dlq_get
+      parameters:
+      - in: header
+        name: authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-Service-Key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Service-Key
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                title: Response Dlq List Api V1 Admin Dlq Get
+                type: object
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Dlq List
+      tags:
+      - admin
+  /api/v1/admin/dlq/drain:
+    post:
+      operationId: dlq_drain_api_v1_admin_dlq_drain_post
+      parameters:
+      - in: header
+        name: authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-Service-Key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Service-Key
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                title: Response Dlq Drain Api V1 Admin Dlq Drain Post
+                type: object
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Dlq Drain
+      tags:
+      - admin
+  /api/v1/admin/kill-switch/{case_id}:
+    delete:
+      description: Clear a previously requested halt (resume).
+      operationId: kill_switch_clear_api_v1_admin_kill_switch__case_id__delete
+      parameters:
+      - in: path
+        name: case_id
+        required: true
+        schema:
+          title: Case Id
+          type: string
+      - in: header
+        name: authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-Service-Key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Service-Key
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                title: Response Kill Switch Clear Api V1 Admin Kill Switch  Case Id  Delete
+                type: object
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Kill Switch Clear
+      tags:
+      - admin
+    post:
+      description: '7.5 HR kill switch: halt further tool effects for a case (audited).'
+      operationId: kill_switch_halt_api_v1_admin_kill_switch__case_id__post
+      parameters:
+      - in: path
+        name: case_id
+        required: true
+        schema:
+          title: Case Id
+          type: string
+      - in: header
+        name: authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-Service-Key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Service-Key
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                title: Response Kill Switch Halt Api V1 Admin Kill Switch  Case Id  Post
+                type: object
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Kill Switch Halt
+      tags:
+      - admin
+  /api/v1/admin/readiness:
+    get:
+      description: '7.7 pilot promotion gate: scans + config + queue health in one
+        call.'
+      operationId: readiness_api_v1_admin_readiness_get
+      parameters:
+      - in: header
+        name: authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-Service-Key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Service-Key
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                title: Response Readiness Api V1 Admin Readiness Get
+                type: object
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Readiness
+      tags:
+      - admin
+  /api/v1/admin/reindex:
+    post:
+      operationId: reindex_api_v1_admin_reindex_post
+      parameters:
+      - in: header
+        name: authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-Service-Key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Service-Key
+      responses:
+        '202':
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                title: Response Reindex Api V1 Admin Reindex Post
+                type: object
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Reindex
+      tags:
+      - admin
+  /api/v1/admin/retention/dry-run:
+    get:
+      description: '7.2 legal sign-off helper: report what retention WOULD redact
+        (no writes).'
+      operationId: retention_dry_run_api_v1_admin_retention_dry_run_get
+      parameters:
+      - in: query
+        name: chat_months
+        required: false
+        schema:
+          default: 12
+          maximum: 120
+          minimum: 1
+          title: Chat Months
+          type: integer
+      - in: query
+        name: trace_months
+        required: false
+        schema:
+          default: 6
+          maximum: 120
+          minimum: 1
+          title: Trace Months
+          type: integer
+      - in: header
+        name: authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-Service-Key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Service-Key
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                title: Response Retention Dry Run Api V1 Admin Retention Dry Run Get
+                type: object
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Retention Dry Run
+      tags:
+      - admin
   /api/v1/approvals/{plan_id}:
     post:
-      operationId: decideApproval
+      operationId: decide_approval_api_v1_approvals__plan_id__post
       parameters:
-        - name: plan_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
+      - in: path
+        name: plan_id
         required: true
+        schema:
+          title: Plan Id
+          type: string
+      - in: header
+        name: authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-Service-Key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Service-Key
+      requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/ApprovalDecision'
+        required: true
       responses:
         '200':
-          description: Decision recorded (approve enqueues execute)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Approval'
-  /api/v1/me/roadmap:
-    get:
-      operationId: getRoadmap
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Decide Approval
+      tags:
+      - approvals
+  /api/v1/auth/dev-login:
+    post:
+      operationId: dev_login_api_v1_auth_dev_login_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DevLoginIn'
+        required: true
       responses:
         '200':
-          description: Employee 30-day plan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DevLoginOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Dev Login
+      tags:
+      - auth
+  /api/v1/cases:
+    get:
+      operationId: list_cases_api_v1_cases_get
+      parameters:
+      - in: query
+        name: status
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/CaseStatus'
+          - type: 'null'
+          title: Status
+      - in: query
+        name: page
+        required: false
+        schema:
+          default: 1
+          minimum: 1
+          title: Page
+          type: integer
+      - in: query
+        name: page_size
+        required: false
+        schema:
+          default: 20
+          maximum: 100
+          minimum: 1
+          title: Page Size
+          type: integer
+      - in: header
+        name: authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-Service-Key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Service-Key
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CasePage'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: List Cases
+      tags:
+      - cases
+  /api/v1/cases/{case_id}/plan:
+    get:
+      operationId: get_plan_api_v1_cases__case_id__plan_get
+      parameters:
+      - in: path
+        name: case_id
+        required: true
+        schema:
+          title: Case Id
+          type: string
+      - in: header
+        name: authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-Service-Key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Service-Key
+      responses:
+        '200':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Plan'
-  /api/v1/me/checklist/{id}:
-    patch:
-      operationId: tickChecklist
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Checklist item updated
+          description: Successful Response
+        '422':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ChecklistItem'
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Plan
+      tags:
+      - plans
+    put:
+      operationId: update_plan_api_v1_cases__case_id__plan_put
+      parameters:
+      - in: path
+        name: case_id
+        required: true
+        schema:
+          title: Case Id
+          type: string
+      - in: header
+        name: authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-Service-Key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Service-Key
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Update Plan
+      tags:
+      - plans
+  /api/v1/cases/{case_id}/stream:
+    get:
+      operationId: stream_trace_api_v1_cases__case_id__stream_get
+      parameters:
+      - in: path
+        name: case_id
+        required: true
+        schema:
+          title: Case Id
+          type: string
+      - in: query
+        name: last_n
+        required: false
+        schema:
+          default: 20
+          maximum: 200
+          minimum: 0
+          title: Last N
+          type: integer
+      - in: query
+        name: last_event_id
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Last Event Id
+      - in: header
+        name: authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-Service-Key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Service-Key
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Stream Trace
+      tags:
+      - cases
   /api/v1/chat:
     post:
-      operationId: policyChat
+      operationId: policy_chat_api_v1_chat_post
+      parameters:
+      - in: header
+        name: authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-Service-Key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Service-Key
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/ChatRequest'
+        required: true
       responses:
         '200':
-          description: Cited answer or abstain
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ChatResponse'
-  /api/v1/admin/reindex:
-    post:
-      operationId: reindex
-      responses:
-        '202':
-          description: Reindex enqueued
-  /api/v1/execute/{case_id}/halt:
-    post:
-      operationId: haltExecution
-      parameters:
-        - name: case_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Halt requested; remaining pending actions halted
+          description: Successful Response
+        '422':
           content:
             application/json:
               schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Policy Chat
+      tags:
+      - chat
+  /api/v1/execute/{case_id}/halt:
+    post:
+      operationId: halt_execution_api_v1_execute__case_id__halt_post
+      parameters:
+      - in: path
+        name: case_id
+        required: true
+        schema:
+          title: Case Id
+          type: string
+      - in: header
+        name: authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-Service-Key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Service-Key
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                title: Response Halt Execution Api V1 Execute  Case Id  Halt Post
                 type: object
-                properties:
-                  case_id: { type: string, format: uuid }
-                  status: { type: string }
-                  actions_halted: { type: integer }
-                  halted: { type: boolean }
-components:
-  parameters:
-    IdempotencyKey:
-      name: Idempotency-Key
-      in: header
-      required: true
-      schema:
-        type: string
-        maxLength: 128
-        example: emp-0001_2026-11-01
-  schemas:
-    CaseStatus:
-      type: string
-      enum: [pending_ingestion, agent_processing, awaiting_hr_approval, executing, needs_attention, active]
-    HireRecord:
-      type: object
-      required: [name, role, dept, region, start_date]
-      properties:
-        name: { type: string, example: Anaya Sharma }
-        role: { type: string, example: Backend Engineer }
-        dept: { type: string, example: Engineering }
-        region: { type: string, example: UK }
-        timezone: { type: string, example: Europe/London }
-        manager_id: { type: string }
-        buddy_id: { type: string }
-        start_date: { type: string, format: date, example: '2026-11-01' }
-    Case:
-      type: object
-      properties:
-        id: { type: string, format: uuid }
-        employee_id: { type: string, format: uuid }
-        status: { $ref: '#/components/schemas/CaseStatus' }
-        current_plan_version: { type: integer }
-        idempotency_key: { type: string }
-    Plan:
-      type: object
-      description: Full versioned plan (EntitlementSet + OnboardingPlan + SystemActionPlan). Detailed schemas in W2/W4.
-      properties:
-        id: { type: string, format: uuid }
-        case_id: { type: string, format: uuid }
-        version: { type: integer }
-        json_payload: { type: object }
-        created_by: { type: string, enum: [agent, hr_user] }
-    ApprovalDecision:
-      type: object
-      required: [decision]
-      properties:
-        decision: { type: string, enum: [approve, reject] }
-        comment: { type: string }
-    Approval:
-      type: object
-      properties:
-        id: { type: string, format: uuid }
-        plan_id: { type: string, format: uuid }
-        approver_id: { type: string }
-        decision: { type: string }
-        decided_at: { type: string, format: date-time }
-    ChecklistItem:
-      type: object
-      properties:
-        id: { type: string, format: uuid }
-        title: { type: string }
-        due_day: { type: integer }
-        mandatory: { type: boolean }
-        completed_at: { type: string, format: date-time, nullable: true }
-    ChatRequest:
-      type: object
-      required: [question]
-      properties:
-        question: { type: string, example: 'What is my remote home-office budget in the UK?' }
-    ChatResponse:
-      type: object
-      properties:
-        answer: { type: string }
-        citations:
-          type: array
-          items:
-            type: object
-            properties:
-              doc: { type: string }
-              page: { type: integer }
-              effective_date: { type: string, format: date }
-        confidence: { type: number }
-    TraceEvent:
-      type: object
-      properties:
-        ts: { type: string, format: date-time }
-        step: { type: string }
-        message: { type: string, example: 'Searching Chroma for UK leave policy...' }
-        case_id: { type: string, format: uuid }
-        session_id: { type: string }
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Halt Execution
+      tags:
+      - execute
+  /api/v1/me/checklist/{item_id}:
+    patch:
+      operationId: tick_checklist_api_v1_me_checklist__item_id__patch
+      parameters:
+      - in: path
+        name: item_id
+        required: true
+        schema:
+          title: Item Id
+          type: string
+      - in: header
+        name: If-Match
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: If-Match
+      - in: header
+        name: authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-Service-Key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Service-Key
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChecklistPatch'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChecklistItem'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Tick Checklist
+      tags:
+      - me
+  /api/v1/me/roadmap:
+    get:
+      operationId: get_roadmap_api_v1_me_roadmap_get
+      parameters:
+      - in: header
+        name: authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-Service-Key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Service-Key
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Roadmap
+      tags:
+      - me
+  /api/v1/onboarding/trigger:
+    post:
+      operationId: trigger_onboarding_api_v1_onboarding_trigger_post
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Idempotency-Key
+      - in: header
+        name: authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-Service-Key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Service-Key
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HireRecord'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Trigger Onboarding
+      tags:
+      - onboarding
+  /health:
+    get:
+      operationId: health_health_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                title: Response Health Health Get
+                type: object
+          description: Successful Response
+      summary: Health
+  /metrics:
+    get:
+      operationId: metrics_metrics_get
+      responses:
+        '200':
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Successful Response
+      summary: Metrics
+servers:
+- url: http://localhost:8000

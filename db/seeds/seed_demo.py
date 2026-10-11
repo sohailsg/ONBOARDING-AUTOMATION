@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import datetime as dt
 import json
-import os
 import pathlib
 import sys
 import uuid
@@ -127,6 +126,7 @@ def _seed_rows():
                 {
                     "id": _uuid("action", str(plan_id), str(i)),
                     "plan_id": plan_id,
+                    "seq": i,
                     "type": a["type"],
                     "payload": a["payload"],
                     "status": "pending",

@@ -1,0 +1,128 @@
+# Production-style deploy (VPS / Render / Railway / Fly).
+# Frontend goes to Vercel (see DEPLOY.md); this file runs everything else.
+#
+# Usage (from onboarding/):
+#   export API_IMAGE=onboarding-backend:local RAG_IMAGE=onboarding-rag:local \
+#          WORKER_IMAGE=onboarding-worker:local
+#   docker compose -f docker-compose.prod.yml up -d --build
+#   docker compose -f docker-compose.prod.yml run --rm migrate
+#
+# First-time demo data: SEED_DEMO=1 docker compose -f ... up -d
+# (seeds the demo hires; never enable for the pilot).
+name: onboarding-prod
+
+networks:
+  onboarding-prod:
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:
+  chromadata:
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    networks: [onboarding-prod]
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-onboarding}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-app} -d $${POSTGRES_DB:-onboarding}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    networks: [onboarding-prod]
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  rag:
+    image: ${RAG_IMAGE:?set RAG_IMAGE (e.g. onboarding-rag:local)}
+    restart: unless-stopped
+    networks: [onboarding-prod]
+    environment:
+      CHROMA_DIR: /data/chroma
+      CHROMA_COLLECTION: ${CHROMA_COLLECTION:-policies_v1}
+      EMBEDDING_BACKEND: ${EMBEDDING_BACKEND:-hash}
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://ollama:11434}
+      WORKER_FIXTURE_MODE: ${WORKER_FIXTURE_MODE:-1}
+    volumes:
+      - chromadata:/data/chroma
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,os;urllib.request.urlopen('http://localhost:'+os.environ.get('RAG_PORT','8001')+'/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  api:
+    image: ${API_IMAGE:?set API_IMAGE (e.g. onboarding-backend:local)}
+    restart: unless-stopped
+    networks: [onboarding-prod]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-onboarding}
+      REDIS_URL: redis://redis:6379/0
+      RAG_BASE_URL: http://rag:8001
+      JWT_DEV_STUB: ${JWT_DEV_STUB:-true}
+      JWT_SECRET_GENERATED: ${JWT_SECRET_GENERATED:?set JWT_SECRET_GENERATED}
+      SERVICE_API_KEY: ${SERVICE_API_KEY:?set SERVICE_API_KEY (== SERVICE_API_KEY_GENERATED in .env)}
+      API_PORT: 8000
+      MCP_MODE: ${MCP_MODE:-sandbox}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rag:
+        condition: service_healthy
+
+  worker:
+    image: ${WORKER_IMAGE:?set WORKER_IMAGE (e.g. onboarding-worker:local)}
+    restart: unless-stopped
+    networks: [onboarding-prod]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-onboarding}
+      REDIS_URL: redis://redis:6379/0
+      RAG_BASE_URL: http://rag:8001
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://ollama:11434}
+      OLLAMA_CHAT_MODEL: ${OLLAMA_CHAT_MODEL:-llama3.1:8b}
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-4}
+      WORKER_FIXTURE_MODE: ${WORKER_FIXTURE_MODE:-1}
+      MCP_MODE: ${MCP_MODE:-sandbox}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: ["arq", "worker.jobs.WorkerSettings"]
+
+  # One-shot release step (migrate + optional demo seed). Run on every deploy:
+  # docker compose -f docker-compose.prod.yml run --rm migrate
+  migrate:
+    image: ${API_IMAGE:?set API_IMAGE}
+    networks: [onboarding-prod]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-onboarding}
+      SEED_DEMO: ${SEED_DEMO:-0}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["sh", "-c", "alembic -c db/alembic.ini upgrade head && if [ \"$SEED_DEMO\" = \"1\" ]; then python db/seeds/seed_demo.py; fi"]

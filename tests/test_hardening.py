@@ -44,7 +44,6 @@ from backend.app.db import get_session
 from backend.executor import (
     clear_halt,
     is_halt_requested,
-    request_halt,
 )
 from backend.app.main import create_app
 from backend.app.models import Base
@@ -174,7 +173,7 @@ def test_retention_dry_run_then_live(client):
     async def _seed():
         factory = client.test_session_factory  # type: ignore[attr-defined]
         async with factory() as s:
-            old = ChatLog(employee_id="e1", question="salary: 90000?",
+            old = ChatLog(employee_id="11111111-1111-4111-8111-111111111111", question="salary: 90000?",
                           answer="a@b.com", citations=[], confidence=0.9)
             from datetime import datetime, timedelta
 

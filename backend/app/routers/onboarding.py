@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response, status
 from sqlalchemy import select
@@ -15,15 +15,13 @@ from ..auth import TokenData, require_roles
 from ..db import get_session
 from ..models import Employee, OnboardingCase
 from ..ratelimit import limiter
-from ..schemas import CaseOut, HireRecord
-from ._shared import case_out
+from ..schemas import Case, HireRecord
+from ._shared import case_out, client_ip
 
 router = APIRouter(prefix="/api/v1/onboarding", tags=["onboarding"])
 
 
-def _parse_date(value: str) -> datetime.date | None:  # type: ignore[name-defined]
-    from datetime import date
-
+def _parse_date(value: str) -> date | None:
     try:
         y, m, d = (int(p) for p in value.split("-"))
         return date(y, m, d)
@@ -31,7 +29,7 @@ def _parse_date(value: str) -> datetime.date | None:  # type: ignore[name-define
         return None
 
 
-@router.post("/trigger", response_model=CaseOut, status_code=201)
+@router.post("/trigger", response_model=Case, status_code=201)
 @limiter.limit("60/minute")
 async def trigger_onboarding(
     request: Request,
@@ -40,7 +38,7 @@ async def trigger_onboarding(
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     user: TokenData = Depends(require_roles("service")),
     session: AsyncSession = Depends(get_session),
-) -> CaseOut:
+) -> Case:
     if not idempotency_key:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Idempotency-Key header required")
     if len(idempotency_key) > 128:
@@ -83,10 +81,16 @@ async def trigger_onboarding(
 
     await write_audit(
         session, actor=f"service:{user.sub}", event="case.triggered", entity=f"case:{case.id}",
-        metadata={"idempotency_key": idempotency_key, "employee_id": employee.id},
+        metadata={"idempotency_key": idempotency_key, "employee_id": employee.id, "ip": client_ip(request)},
         case_id=case.id, session_id=case.session_id,
     )
     await session.commit()
-    await jobs.enqueue("plan_job", case.id, case.session_id)
+    job_id = await jobs.enqueue("plan_job", case.id, case.session_id)
+    await write_audit(
+        session, actor=f"service:{user.sub}", event="job.enqueued", entity=f"case:{case.id}",
+        metadata={"job": "plan_job", "job_id": job_id, "ip": client_ip(request)},
+        case_id=case.id, session_id=case.session_id,
+    )
+    await session.commit()
     response.status_code = status.HTTP_201_CREATED
     return case_out(case)

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
+import { ApiVersionBanner } from "@/components/api-version-banner";
 
 export const metadata: Metadata = {
   title: "Onboarding — Employee Hub & HR Admin Center",
@@ -18,6 +19,7 @@ export default function RootLayout({
         <a href="#main" className="skip-link">
           Skip to content
         </a>
+        <ApiVersionBanner />
         <Providers>{children}</Providers>
       </body>
     </html>

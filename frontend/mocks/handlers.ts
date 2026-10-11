@@ -40,4 +40,10 @@ export const handlers = [
   http.get("*/api/v1/cases/:id/stream", () =>
     HttpResponse.json(traces),
   ),
+  http.post("*/api/v1/auth/dev-login", async ({ request }) => {
+    const body = (await request.json()) as { role?: string };
+    const role = body.role === "hr_admin" ? "hr_admin" : "employee";
+    const sub = role === "hr_admin" ? "hr-1" : CASE.employee_id;
+    return HttpResponse.json({ token: `dev:${role}:${sub}`, role, sub });
+  }),
 ];

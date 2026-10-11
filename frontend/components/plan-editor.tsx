@@ -80,7 +80,7 @@ export function PlanEditor({ caseId }: { caseId: string }) {
     <section aria-label="HITL plan editor" className="card">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-semibold">
-          Plan review <span className="text-sm font-normal text-slate-500">v{data.version}</span>
+          Plan review <span className="text-sm font-normal text-slate-400">v{data.version}</span>
         </h2>
         <label className="flex items-center gap-2 text-sm">
           <input
@@ -92,7 +92,7 @@ export function PlanEditor({ caseId }: { caseId: string }) {
         </label>
       </div>
       {notice && (
-        <p role="status" className="mt-2 text-sm text-slate-700">
+        <p role="status" className="notice">
           {notice}
         </p>
       )}
@@ -103,10 +103,10 @@ export function PlanEditor({ caseId }: { caseId: string }) {
           const current = JSON.stringify(sectionPayload(working, section) ?? "(empty)", null, 2);
           const changed = original !== current;
           return (
-            <details key={section} open className="rounded-lg border border-slate-200 p-3">
-              <summary className="cursor-pointer font-medium">
+            <details key={section} open className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+              <summary className="cursor-pointer font-medium text-slate-100">
                 {section.replace(/_/g, " ")}
-                {changed && <span className="badge ml-2 bg-amber-100 text-amber-800">edited</span>}
+                {changed && <span className="badge ml-2 border-amber-300/30 bg-amber-400/10 text-amber-200">edited</span>}
               </summary>
               {editing === section ? (
                 <div className="mt-2">
@@ -123,27 +123,27 @@ export function PlanEditor({ caseId }: { caseId: string }) {
                       setEditing(null);
                     }}
                   />
-                  <p className="mt-1 text-xs text-slate-500">JSON preferred; blur to apply.</p>
+                  <p className="faint mt-1 text-xs">JSON preferred; blur to apply.</p>
                 </div>
               ) : (
                 <div className="mt-2">
-                  <pre className="overflow-x-auto rounded bg-slate-50 p-2 text-xs">{current}</pre>
+                  <pre className="pre-glass">{current}</pre>
                   <button className="btn-ghost mt-2 text-xs" onClick={() => setEditing(section)}>
                     Edit section
                   </button>
                 </div>
               )}
               {showDiff && changed && (
-                <div className="mt-2 rounded bg-slate-50 p-2 text-xs" aria-label={`Diff for ${section}`}>
+                <div className="console mt-2" aria-label={`Diff for ${section}`}>
                   {lineDiff(original, current).map((d, i) => (
                     <div
                       key={i}
                       className={
                         d.type === "add"
-                          ? "bg-green-100 text-green-900"
+                          ? "diff-add"
                           : d.type === "del"
-                            ? "bg-red-100 text-red-900"
-                            : "text-slate-600"
+                            ? "diff-del"
+                            : "diff-ctx"
                       }
                     >
                       {d.type === "add" ? "+ " : d.type === "del" ? "− " : "  "}
@@ -167,10 +167,10 @@ export function PlanEditor({ caseId }: { caseId: string }) {
       </div>
 
       {confirmOpen && (
-        <div role="dialog" aria-modal="true" aria-label="Confirm approval" className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
-          <div className="card w-full max-w-md">
+        <div role="dialog" aria-modal="true" aria-label="Confirm approval" className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="card w-full max-w-md shadow-glow motion-safe:animate-rise">
             <h3 className="text-lg font-semibold">Approve &amp; Execute?</h3>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="muted mt-1 text-sm">
               This enqueues deterministic execution (emails, invites, tickets). This cannot be undone
               from here — use Halt in Execution view to stop a runaway.
             </p>

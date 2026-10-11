@@ -16,8 +16,11 @@ export default function CaseDetailPage({ params }: { params: { id: string } }) {
   }, [params.id, setSelected]);
 
   return (
-    <main id="main" className="mx-auto max-w-6xl space-y-4 px-4 py-8">
-      <h1 className="text-2xl font-bold">Case {params.id.slice(0, 8)}…</h1>
+    <main id="main" className="mx-auto max-w-6xl space-y-4 px-4 py-8 motion-safe:animate-rise">
+      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300/80">
+        Flight plan
+      </p>
+      <h1 className="title-gradient text-2xl font-bold">Case {params.id.slice(0, 8)}…</h1>
       <div role="tablist" aria-label="Case detail" className="flex gap-2">
         {(["plan", "trace", "execution"] as Tab[]).map((t) => (
           <button

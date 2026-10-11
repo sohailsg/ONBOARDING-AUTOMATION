@@ -178,11 +178,15 @@ def _rag_http_retrieve(query: str, region: str, dept: str, timeout_s: float = 4.
             data = json.loads(resp.read().decode())
         chunks = []
         for item in data.get("chunks", [])[:5]:
-            cit = item.get("citation", {})
+            cit = item.get("citation", {}) or {}
+            # RAG service returns flat fields (doc/page/effective_date);
+            # accept a nested `citation` object too.
+            doc = cit.get("doc") or item.get("doc") or "Employee-Handbook-2026.pdf"
+            page = cit.get("page", item.get("page"))
+            eff = cit.get("effective_date", item.get("effective_date"))
             chunks.append(CitedChunk(
                 text=item.get("text", "")[:2000],
-                citation=Citation(doc=cit.get("doc", "Employee-Handbook-2026.pdf"),
-                                 page=cit.get("page"), effective_date=cit.get("effective_date")),
+                citation=Citation(doc=doc, page=page, effective_date=eff),
                 score=float(item.get("score", 0.0)),
             ))
         return chunks or None

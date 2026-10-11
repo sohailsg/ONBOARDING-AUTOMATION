@@ -143,7 +143,6 @@ def test_budget_caps_enforced():
 
 
 def test_new_budget_respects_env(monkeypatch):
-    import os
 
     monkeypatch.setenv("MAX_STEPS_PER_RUN", "7")
     monkeypatch.setenv("MAX_TOKENS_PER_RUN", "1234")
